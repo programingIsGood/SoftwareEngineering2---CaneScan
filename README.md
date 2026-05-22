@@ -1,1 +1,1 @@
-# SoftwareEngineering2---CaneScan-Taglish-Legal-Assistant
+# SoftwareEngineering2---CaneScan
