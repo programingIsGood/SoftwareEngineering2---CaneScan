@@ -1,4 +1,4 @@
-# Plant Pathogen Detection System
+# CaneScan: Plant Pathogen Detection System
 
 An end-to-end computer vision and database application designed to scan crop images, identify agricultural pathogens using a Custom Convolutional Neural Network (CNN), and log diagnostic results to a Firebase Realtime Database backend.
 
