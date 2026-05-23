@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFDE7"
+    tools:context=".DashboardActivity">
+
+    <!-- Header Section -->
+    <View
+        android:id="@+id/header_bg"
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:background="@drawable/dashboard_header_bg"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/iv_home_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="60dp"
+        android:src="@drawable/ic_home"
+        android:contentDescription="Home Icon"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@android:color/white" />
+
+    <TextView
+        android:id="@+id/tv_dashboard_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Dashboard"
+        android:textColor="@android:color/white"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:background="@drawable/underline_white"
+        android:paddingBottom="4dp"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_home_icon"
+        app:layout_constraintStart_toEndOf="@+id/iv_home_icon"
+        app:layout_constraintTop_toTopOf="@+id/iv_home_icon" />
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/iv_profile"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginEnd="24dp"
+        android:src="@drawable/user"
+        app:civ_circle_background_color="@android:color/white"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Profile Picture"
+        app:layout_constraintBottom_toBottomOf="@+id/header_bg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/header_bg"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <!-- Bottom Navigation -->
+    <LinearLayout
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@drawable/bottom_nav_bg"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/nav_home"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:baselineAligned="false"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_home"
+                android:contentDescription="Home"
+                app:tint="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Home"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/nav_map"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:baselineAligned="false"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_map"
+                android:contentDescription="Map"
+                app:tint="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Map"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/nav_history"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:baselineAligned="false"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_history"
+                android:contentDescription="History"
+                app:tint="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="History"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/nav_settings"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:baselineAligned="false"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_settings"
+                android:contentDescription="Settings"
+                app:tint="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Settings"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Main Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_nav"
+        app:layout_constraintTop_toBottomOf="@+id/header_bg">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Plantation Overview Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Plantation Overview"
+                    android:textColor="#84AD7F"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/stat_box_bg"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:layout_marginEnd="4dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Scan today"
+                            android:textSize="12sp"
+                            android:textColor="#84AD7F" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#84AD7F" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/stat_box_bg"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:layout_marginEnd="4dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Infections"
+                            android:textSize="12sp"
+                            android:textColor="#84AD7F" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#84AD7F" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/stat_box_bg"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Healthy"
+                            android:textSize="12sp"
+                            android:textColor="#84AD7F" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#84AD7F" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#84AD7F"
+                    android:layout_marginTop="16dp" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="View"
+                        android:textColor="#84AD7F"
+                        android:layout_centerHorizontal="true"/>
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:layout_alignParentEnd="true"
+                        android:contentDescription="View More"
+                        app:tint="#84AD7F" />
+                </RelativeLayout>
+            </LinearLayout>
+
+            <!-- Recent Diagnose Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recent Diagnose"
+                    android:textColor="#84AD7F"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <!-- Header Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Sugarcane"
+                        android:textColor="#84AD7F"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Condition"
+                        android:textColor="#84AD7F"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#84AD7F" />
+
+                <!-- Data Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="---"
+                        android:textColor="#84AD7F" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/condition_label_bg"
+                        android:gravity="center"
+                        android:minWidth="80dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="4dp"
+                        android:text="---"
+                        android:textColor="#84AD7F" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#84AD7F"
+                    android:layout_marginTop="12dp" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="View"
+                        android:textColor="#84AD7F"
+                        android:layout_centerHorizontal="true"/>
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:layout_alignParentEnd="true"
+                        android:contentDescription="View More"
+                        app:tint="#84AD7F" />
+                </RelativeLayout>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_scan_now"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="32dp"
+                android:background="@drawable/pill_button_bg"
+                android:text="SCAN NOW"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

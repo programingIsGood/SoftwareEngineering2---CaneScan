@@ -60,10 +60,12 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="#E0E0E0"
+                android:padding="8dp"
+                android:src="@drawable/user" />
 
             <EditText
                 android:id="@+id/et_full_name"
@@ -87,10 +89,12 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="#E0E0E0"
+                android:padding="8dp"
+                android:src="@drawable/gmail" />
 
             <EditText
                 android:id="@+id/et_email"
@@ -114,22 +118,34 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="#E0E0E0"
+                android:padding="8dp"
+                android:src="@drawable/padlocks" />
 
-            <EditText
-                android:id="@+id/et_password"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@android:color/transparent"
-                android:hint="Password"
-                android:inputType="textPassword"
-                android:textColor="@android:color/black"
-                android:textColorHint="@android:color/black"
-                android:textSize="16sp" />
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#84AD7F">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:hint="Password"
+                    android:inputType="textPassword"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:textColor="@android:color/black"
+                    android:textColorHint="@android:color/black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -141,22 +157,34 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="#E0E0E0"
+                android:padding="8dp"
+                android:src="@drawable/padlocks" />
 
-            <EditText
-                android:id="@+id/et_confirm_password"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@android:color/transparent"
-                android:hint="Confirm Password"
-                android:inputType="textPassword"
-                android:textColor="@android:color/black"
-                android:textColorHint="@android:color/black"
-                android:textSize="16sp" />
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#84AD7F">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_confirm_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:hint="Confirm Password"
+                    android:inputType="textPassword"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:textColor="@android:color/black"
+                    android:textColorHint="@android:color/black"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
     </LinearLayout>

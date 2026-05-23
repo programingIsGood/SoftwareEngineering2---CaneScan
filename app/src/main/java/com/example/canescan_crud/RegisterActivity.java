@@ -24,7 +24,7 @@ public class RegisterActivity extends AppCompatActivity {
     private FirebaseFirestore db;
 
     // Declare UI elements
-    private EditText etName, etEmail, etPassword;
+    private EditText etName, etEmail, etPassword, etConfirmPassword;
     private Button btnSignUp;
     private TextView tvLogin;
 
@@ -41,6 +41,7 @@ public class RegisterActivity extends AppCompatActivity {
         etName = findViewById(R.id.et_full_name);
         etEmail = findViewById(R.id.et_email);
         etPassword = findViewById(R.id.et_password);
+        etConfirmPassword = findViewById(R.id.et_confirm_password);
         btnSignUp = findViewById(R.id.btn_register_submit);
         tvLogin = findViewById(R.id.tv_back_to_login);
 
@@ -59,9 +60,15 @@ public class RegisterActivity extends AppCompatActivity {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
+            String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                 Toast.makeText(RegisterActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+                Toast.makeText(RegisterActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -84,8 +91,8 @@ public class RegisterActivity extends AppCompatActivity {
                             db.collection("users").document(userId)
                                     .set(userMap)
                                     .addOnSuccessListener(aVoid -> {
-                                        // Success! Move to MainActivity
-                                        startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                                        // Success! Move to DashboardActivity
+                                        startActivity(new Intent(RegisterActivity.this, DashboardActivity.class));
                                         finish();
                                     })
                                     .addOnFailureListener(e -> {

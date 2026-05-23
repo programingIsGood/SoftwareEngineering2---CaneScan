@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignInClient;
     private FirebaseAuth mAuth;
     private ImageView btnGoogle;
+    private com.google.android.material.button.MaterialButton btnLogin, btnRegister;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         btnGoogle = findViewById(R.id.btn_google_signin);
+        btnLogin = findViewById(R.id.btn_login);
+        btnRegister = findViewById(R.id.btn_register);
 
         // 1. Configure Google Sign-In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -40,9 +43,17 @@ public class MainActivity extends AppCompatActivity {
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // 2. Set Click Listener
+        // 2. Set Click Listeners
         btnGoogle.setOnClickListener(v -> {
             signIn();
+        });
+
+        btnLogin.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+        });
+
+        btnRegister.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, RegisterActivity.class));
         });
     }
 
@@ -72,8 +83,8 @@ public class MainActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(MainActivity.this, "Google Sign-In Successful!", Toast.LENGTH_SHORT).show();
-                        // Navigate to your dashboard or home screen
-                        startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                        // Navigate to dashboard
+                        startActivity(new Intent(MainActivity.this, DashboardActivity.class));
                         finish();
                     } else {
                         Toast.makeText(MainActivity.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();

@@ -60,10 +60,12 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="#E0E0E0"
+                android:padding="8dp"
+                android:src="@drawable/gmail" />
 
             <EditText
                 android:id="@+id/et_email"
@@ -87,10 +89,12 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="#E0E0E0"
+                android:padding="8dp"
+                android:src="@drawable/padlocks" />
 
             <EditText
                 android:id="@+id/et_password"
