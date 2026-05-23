@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "542987361639",
+    "firebase_url": "https://asdfds-8e0f5-default-rtdb.firebaseio.com",
+    "project_id": "asdfds-8e0f5",
+    "storage_bucket": "asdfds-8e0f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542987361639:android:cdf662cff6b2142c3123c2",
+        "android_client_info": {
+          "package_name": "com.example.canescan_crud"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "542987361639-mka97g1osbe6k2bemshnkv9mbg8fsqp4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.canescan_crud",
+            "certificate_hash": "d34ded66ad73718b1094766b34139d720400825b"
+          }
+        },
+        {
+          "client_id": "542987361639-lj06njhjl0svc8kabc18465b9m7esuvg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOa3M0qkbKkWFSPXAY5jHW3ca0Q5693rs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "542987361639-2ijtgu5cr0no7go6gij88liu0c5vse7s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
