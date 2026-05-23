@@ -14,6 +14,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.SwitchCompat;
 
 import com.bumptech.glide.Glide;
 
@@ -53,6 +55,20 @@ public class ProfileActivity extends AppCompatActivity {
         View tvClear = findViewById(R.id.tv_upload_clear);
         
         sharedPreferences = getSharedPreferences("CaneScanPrefs", Context.MODE_PRIVATE);
+
+        // Dark Mode Setup
+        SwitchCompat switchDarkMode = findViewById(R.id.switch_dark_mode);
+        boolean isDarkMode = sharedPreferences.getBoolean("dark_mode", false);
+        switchDarkMode.setChecked(isDarkMode);
+
+        switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+            sharedPreferences.edit().putBoolean("dark_mode", isChecked).apply();
+        });
 
         // Load saved image on startup
         String savedImageUri = sharedPreferences.getString("profile_image_uri", null);

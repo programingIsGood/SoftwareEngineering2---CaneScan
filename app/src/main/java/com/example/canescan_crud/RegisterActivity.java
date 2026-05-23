@@ -14,16 +14,17 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    // Declare Firebase instances
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // Declare UI elements
     private EditText etName, etEmail, etPassword, etConfirmPassword;
     private Button btnSignUp;
     private TextView tvLogin;
@@ -33,11 +34,9 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.register_activity);
 
-        // 1. Initialize Firebase Auth and Firestore
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // Initialize UI Views
         etName = findViewById(R.id.et_full_name);
         etEmail = findViewById(R.id.et_email);
         etPassword = findViewById(R.id.et_password);
@@ -45,17 +44,11 @@ public class RegisterActivity extends AppCompatActivity {
         btnSignUp = findViewById(R.id.btn_register_submit);
         tvLogin = findViewById(R.id.tv_back_to_login);
 
-        // Navigation back to Login Activity
-        tvLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                startActivity(intent);
-                finish();
-            }
+        tvLogin.setOnClickListener(v -> {
+            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            finish();
         });
 
-        // 2. Logic for your "Sign Up" button
         btnSignUp.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
@@ -72,26 +65,23 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            // Create user in Firebase Auth
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            // Get the unique ID created by Auth
                             String userId = mAuth.getCurrentUser().getUid();
 
-                            // 3. Prepare the Map for Firestore (Matching your structure)
                             Map<String, Object> userMap = new HashMap<>();
                             userMap.put("name", name);
                             userMap.put("email", email);
-                            userMap.put("role", "user"); // Default role
+                            userMap.put("role", "user");
+                            userMap.put("password_hash", hashPassword(password));
+                            userMap.put("email_verified_at", null);
                             userMap.put("created_at", FieldValue.serverTimestamp());
                             userMap.put("updated_at", FieldValue.serverTimestamp());
 
-                            // 4. Save to "users" collection
                             db.collection("users").document(userId)
                                     .set(userMap)
                                     .addOnSuccessListener(aVoid -> {
-                                        // Success! Move to DashboardActivity
                                         startActivity(new Intent(RegisterActivity.this, DashboardActivity.class));
                                         finish();
                                     })
@@ -99,9 +89,26 @@ public class RegisterActivity extends AppCompatActivity {
                                         Toast.makeText(RegisterActivity.this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                     });
                         } else {
-                            Toast.makeText(RegisterActivity.this, "Auth Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(RegisterActivity.this, "Auth Failed: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"), Toast.LENGTH_LONG).show();
                         }
                     });
-        });
+        }); // Added missing closing brace and parenthesis
+    } // Closes onCreate
+
+    // Moved helper method outside of onCreate
+    private String hashPassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
     }
 }
