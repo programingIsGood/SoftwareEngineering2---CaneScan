@@ -29,12 +29,3 @@ The system relies on a clean, relational schema designed for efficient diagnosti
 📐 **Live Workspace Design Canvas:** [Access the Live Lucidchart Diagram](https://lucid.app/lucidchart/553a10c0-25a7-4def-9c8f-8a9825ebf48d/edit?viewport_loc=1249%2C496%2C2164%2C1091%2C0_0&invitationId=inv_1360d0bf-0bad-4f30-b2d1-b5a500e4bdcb)
 
 ---
-
-## 🚀 Getting Started
-
-### 1. Prerequisites & Environment Setup
-To ensure reproducible builds across teams, the Android development and SDK environment is fully encapsulated inside a Docker container.
-
-Build the environment image locally:
-```bash
-docker build -t android-firebase-env .
