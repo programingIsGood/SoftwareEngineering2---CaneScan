@@ -60,7 +60,7 @@ public class ProfileActivity extends AppCompatActivity {
         etGender = findViewById(R.id.et_gender);
         etBio = findViewById(R.id.et_bio);
 
-        swDarkMode = findViewById(R.id.sw_dark_mode);
+        swDarkMode = findViewById(R.id.switch_dark_mode);
         if (swDarkMode != null) {
             swDarkMode.setChecked(isDarkMode);
             swDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {

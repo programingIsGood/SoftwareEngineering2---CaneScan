@@ -5,15 +5,27 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,12 +35,15 @@ import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
+    private static final int RC_SIGN_IN = 100;
+    private GoogleSignInClient mGoogleSignInClient;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
     private EditText etName, etEmail, etPassword, etConfirmPassword;
     private Button btnSignUp;
     private TextView tvLogin;
+    private ImageView btnGoogle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +59,15 @@ public class RegisterActivity extends AppCompatActivity {
         etConfirmPassword = findViewById(R.id.et_confirm_password);
         btnSignUp = findViewById(R.id.btn_register_submit);
         tvLogin = findViewById(R.id.tv_back_to_login);
+        btnGoogle = findViewById(R.id.btn_google_signin);
+
+        // Configure Google Sign-In
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         tvLogin.setOnClickListener(v -> {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
@@ -106,8 +130,74 @@ public class RegisterActivity extends AppCompatActivity {
                             Toast.makeText(RegisterActivity.this, "Database Check Failed: " + error, Toast.LENGTH_SHORT).show();
                         }
                     });
-        }); // Added missing closing brace and parenthesis
-    } // Closes onCreate
+        });
+
+        btnGoogle.setOnClickListener(v -> signIn());
+    }
+
+    private void signIn() {
+        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                firebaseAuthWithGoogle(account.getIdToken());
+            } catch (ApiException e) {
+                Toast.makeText(this, "Google sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void firebaseAuthWithGoogle(String idToken) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            saveGoogleUserToFirestore(user);
+                        }
+                    } else {
+                        Toast.makeText(RegisterActivity.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void saveGoogleUserToFirestore(FirebaseUser user) {
+        String userId = user.getUid();
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("name", user.getDisplayName());
+        userMap.put("email", user.getEmail());
+        userMap.put("role", "user");
+        userMap.put("email_verified_at", FieldValue.serverTimestamp());
+        userMap.put("updated_at", FieldValue.serverTimestamp());
+
+        db.collection("users").document(userId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && !task.getResult().exists()) {
+                userMap.put("created_at", FieldValue.serverTimestamp());
+            }
+
+            db.collection("users").document(userId)
+                    .set(userMap, SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(RegisterActivity.this, "Google Sign-In Successful!", Toast.LENGTH_SHORT).show();
+                        startActivity(new Intent(RegisterActivity.this, DashboardActivity.class));
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(RegisterActivity.this, "Error saving profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        startActivity(new Intent(RegisterActivity.this, DashboardActivity.class));
+                        finish();
+                    });
+        });
+    }
 
     // Helper method to save user data to Firestore
     private void saveUserToFirestore(String userId, String name, String email, String password) {
@@ -131,7 +221,6 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    // Moved helper method outside of onCreate
     private String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
