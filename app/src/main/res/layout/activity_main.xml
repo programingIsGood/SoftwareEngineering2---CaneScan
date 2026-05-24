@@ -108,12 +108,6 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_or">
 
         <ImageView
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginEnd="20dp"
-            android:src="@drawable/fb1" />
-
-        <ImageView
             android:id="@+id/btn_google_signin"    android:layout_width="45dp"
             android:layout_height="45dp"
             android:src="@drawable/chrome1"
