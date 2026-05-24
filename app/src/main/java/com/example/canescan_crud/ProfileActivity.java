@@ -114,6 +114,14 @@ public class ProfileActivity extends AppCompatActivity {
             });
         }
 
+        View navMap = findViewById(R.id.nav_map);
+        if (navMap != null) {
+            navMap.setOnClickListener(v -> {
+                Intent intent = new Intent(ProfileActivity.this, MapActivity.class);
+                startActivity(intent);
+            });
+        }
+
         View navSettings = findViewById(R.id.nav_settings);
         if (navSettings != null) {
             navSettings.setOnClickListener(v -> {
