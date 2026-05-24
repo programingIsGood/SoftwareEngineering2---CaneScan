@@ -88,7 +88,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         View tvClear = findViewById(R.id.tv_upload_clear);
-        
+
         // Load saved image on startup
         String savedImageUri = sharedPreferences.getString("profile_image_uri", null);
         if (savedImageUri != null) {
@@ -180,6 +180,14 @@ public class ProfileActivity extends AppCompatActivity {
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 finish();
+            });
+        }
+
+        View navMap = findViewById(R.id.nav_map);
+        if (navMap != null) {
+            navMap.setOnClickListener(v -> {
+                Intent intent = new Intent(ProfileActivity.this, MapActivity.class);
+                startActivity(intent);
             });
         }
 

@@ -11,19 +11,21 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    // Declare Firebase instances
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // Declare UI elements
     private EditText etName, etEmail, etPassword, etConfirmPassword;
     private Button btnSignUp;
     private TextView tvLogin;
@@ -33,11 +35,9 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.register_activity);
 
-        // 1. Initialize Firebase Auth and Firestore
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // Initialize UI Views
         etName = findViewById(R.id.et_full_name);
         etEmail = findViewById(R.id.et_email);
         etPassword = findViewById(R.id.et_password);
@@ -45,17 +45,11 @@ public class RegisterActivity extends AppCompatActivity {
         btnSignUp = findViewById(R.id.btn_register_submit);
         tvLogin = findViewById(R.id.tv_back_to_login);
 
-        // Navigation back to Login Activity
-        tvLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                startActivity(intent);
-                finish();
-            }
+        tvLogin.setOnClickListener(v -> {
+            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            finish();
         });
 
-        // 2. Logic for your "Sign Up" button
         btnSignUp.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
@@ -72,36 +66,85 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            // Create user in Firebase Auth
-            mAuth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            // Get the unique ID created by Auth
-                            String userId = mAuth.getCurrentUser().getUid();
-
-                            // 3. Prepare the Map for Firestore (Matching your structure)
-                            Map<String, Object> userMap = new HashMap<>();
-                            userMap.put("name", name);
-                            userMap.put("email", email);
-                            userMap.put("role", "user"); // Default role
-                            userMap.put("created_at", FieldValue.serverTimestamp());
-                            userMap.put("updated_at", FieldValue.serverTimestamp());
-
-                            // 4. Save to "users" collection
-                            db.collection("users").document(userId)
-                                    .set(userMap)
-                                    .addOnSuccessListener(aVoid -> {
-                                        // Success! Move to DashboardActivity
-                                        startActivity(new Intent(RegisterActivity.this, DashboardActivity.class));
-                                        finish();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(RegisterActivity.this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                    });
+            // Check if email already exists in Firestore database
+            db.collection("users")
+                    .whereEqualTo("email", email)
+                    .get()
+                    .addOnCompleteListener(checkTask -> {
+                        if (checkTask.isSuccessful()) {
+                            if (!checkTask.getResult().isEmpty()) {
+                                // Email IS in the database - truly in use.
+                                Toast.makeText(RegisterActivity.this, "This email is already registered.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                // Email NOT in database - Try to create account
+                                mAuth.createUserWithEmailAndPassword(email, password)
+                                        .addOnCompleteListener(task -> {
+                                            if (task.isSuccessful()) {
+                                                // Success: Brand new user
+                                                saveUserToFirestore(mAuth.getCurrentUser().getUid(), name, email, password);
+                                            } else if (task.getException() instanceof FirebaseAuthUserCollisionException) {
+                                                // SPECIAL CASE: Email is in Auth, but NOT in our DB.
+                                                // We attempt to sign in to "verify" and then create the DB entry.
+                                                mAuth.signInWithEmailAndPassword(email, password)
+                                                        .addOnCompleteListener(signInTask -> {
+                                                            if (signInTask.isSuccessful()) {
+                                                                // Account verified! Repairing the database record.
+                                                                saveUserToFirestore(mAuth.getCurrentUser().getUid(), name, email, password);
+                                                            } else {
+                                                                // Account exists in Auth, but password doesn't match
+                                                                Toast.makeText(RegisterActivity.this, "Account already exists. Please login with your existing password.", Toast.LENGTH_LONG).show();
+                                                            }
+                                                        });
+                                            } else {
+                                                String error = (task.getException() != null) ? task.getException().getMessage() : "Unknown error";
+                                                Toast.makeText(RegisterActivity.this, "Registration Error: " + error, Toast.LENGTH_LONG).show();
+                                            }
+                                        });
+                            }
                         } else {
-                            Toast.makeText(RegisterActivity.this, "Auth Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            String error = (checkTask.getException() != null) ? checkTask.getException().getMessage() : "Unknown error";
+                            Toast.makeText(RegisterActivity.this, "Database Check Failed: " + error, Toast.LENGTH_SHORT).show();
                         }
                     });
-        });
+        }); // Added missing closing brace and parenthesis
+    } // Closes onCreate
+
+    // Helper method to save user data to Firestore
+    private void saveUserToFirestore(String userId, String name, String email, String password) {
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("name", name);
+        userMap.put("email", email);
+        userMap.put("role", "user");
+        userMap.put("password_hash", hashPassword(password));
+        userMap.put("email_verified_at", null);
+        userMap.put("created_at", FieldValue.serverTimestamp());
+        userMap.put("updated_at", FieldValue.serverTimestamp());
+
+        db.collection("users").document(userId)
+                .set(userMap)
+                .addOnSuccessListener(aVoid -> {
+                    startActivity(new Intent(RegisterActivity.this, DashboardActivity.class));
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(RegisterActivity.this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    // Moved helper method outside of onCreate
+    private String hashPassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
     }
 }
