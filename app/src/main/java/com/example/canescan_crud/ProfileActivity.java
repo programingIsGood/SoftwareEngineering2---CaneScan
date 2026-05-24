@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -21,9 +22,16 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -147,24 +155,76 @@ public class ProfileActivity extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
                                 String userId = user.getUid();
-                                // Delete from Firestore first
-                                db.collection("users").document(userId).delete()
-                                        .addOnSuccessListener(aVoid -> {
-                                            // Then delete Auth user
-                                            user.delete().addOnCompleteListener(task -> {
-                                                if (task.isSuccessful()) {
-                                                    Toast.makeText(ProfileActivity.this, "Account deleted", Toast.LENGTH_SHORT).show();
-                                                    Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
-                                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                                    startActivity(intent);
-                                                    finish();
-                                                } else {
-                                                    Toast.makeText(ProfileActivity.this, "Failed to delete account: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"), Toast.LENGTH_LONG).show();
+
+                                // 1. Find all user's scan logs
+                                db.collection("scan_logs")
+                                        .whereEqualTo("user_id", userId)
+                                        .get()
+                                        .addOnSuccessListener(scanLogs -> {
+                                            WriteBatch batch = db.batch();
+                                            List<Task<com.google.firebase.firestore.QuerySnapshot>> diagnosticTasks = new ArrayList<>();
+
+                                            for (QueryDocumentSnapshot scanDoc : scanLogs) {
+                                                // For each scan, prepare to find its diagnostic results
+                                                String scanId = scanDoc.getId();
+                                                diagnosticTasks.add(db.collection("diagnostic_results")
+                                                        .whereEqualTo("scan_id", scanId)
+                                                        .get());
+                                                
+                                                // Add scan log to batch
+                                                batch.delete(scanDoc.getReference());
+                                            }
+
+                                            // 2. Wait for all diagnostic result queries to complete
+                                            Tasks.whenAllSuccess(diagnosticTasks).addOnSuccessListener(resultsList -> {
+                                                for (Object result : resultsList) {
+                                                    com.google.firebase.firestore.QuerySnapshot diagnosticResults = (com.google.firebase.firestore.QuerySnapshot) result;
+                                                    for (QueryDocumentSnapshot diagDoc : diagnosticResults) {
+                                                        batch.delete(diagDoc.getReference());
+                                                    }
                                                 }
+
+                                                // 3. Delete user profile document
+                                                batch.delete(db.collection("users").document(userId));
+
+                                                // Commit all Firestore deletions
+                                                batch.commit().addOnSuccessListener(aVoid -> {
+                                                    // 4. Delete Firebase Auth user
+                                                    user.delete().addOnCompleteListener(task -> {
+                                                        if (task.isSuccessful()) {
+                                                            // 5. Clear all local data & cache
+                                                            sharedPreferences.edit().clear().apply();
+                                                            PreferenceManager.getDefaultSharedPreferences(ProfileActivity.this).edit().clear().apply();
+                                                            
+                                                            // Clear Firestore local persistence (Offline Cache)
+                                                            db.clearPersistence().addOnCompleteListener(t -> {
+                                                                // Clear Image Cache (Glide)
+                                                                Glide.get(ProfileActivity.this).clearMemory();
+                                                                new Thread(() -> {
+                                                                    Glide.get(ProfileActivity.this).clearDiskCache();
+                                                                }).start();
+
+                                                                Toast.makeText(ProfileActivity.this, "Account and all associated data permanently deleted", Toast.LENGTH_LONG).show();
+                                                                
+                                                                // Redirect to Login/Registration
+                                                                Intent intent = new Intent(ProfileActivity.this, MainActivity.class);
+                                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                                startActivity(intent);
+                                                                finish();
+                                                            });
+                                                        } else {
+                                                            Toast.makeText(ProfileActivity.this, "Failed to delete auth account: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"), Toast.LENGTH_LONG).show();
+                                                        }
+                                                    });
+                                                }).addOnFailureListener(e -> {
+                                                    Toast.makeText(ProfileActivity.this, "Error committing batch deletion: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                                });
+                                            }).addOnFailureListener(e -> {
+                                                Toast.makeText(ProfileActivity.this, "Error fetching diagnostic results: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                             });
                                         })
                                         .addOnFailureListener(e -> {
-                                            Toast.makeText(ProfileActivity.this, "Error deleting data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                            Toast.makeText(ProfileActivity.this, "Error fetching scan logs: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                         });
                             }
                         })

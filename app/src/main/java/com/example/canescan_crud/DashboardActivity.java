@@ -146,14 +146,28 @@ public class DashboardActivity extends AppCompatActivity {
     private void saveScanWithLocation(double lat, double lon) {
         String userId = (mAuth.getCurrentUser() != null) ? mAuth.getCurrentUser().getUid() : "anonymous";
 
+        // 1. Prepare Scan Log entry
         Map<String, Object> scanLog = new HashMap<>();
         scanLog.put("user_id", userId);
         scanLog.put("latitude", lat);
         scanLog.put("longitude", lon);
         scanLog.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
-        scanLog.put("image_url", "sample_url"); // Placeholder
+        scanLog.put("image_url", "https://firebasestorage.googleapis.com/.../sample.jpg");
 
         db.collection("scan_logs").add(scanLog)
+                .addOnSuccessListener(documentReference -> {
+                    String scanId = documentReference.getId();
+                    
+                    // 2. Create associated Diagnostic Result (Schema: FK scan_id, FK pathogen_id)
+                    Map<String, Object> diagnosticResult = new HashMap<>();
+                    diagnosticResult.put("scan_id", scanId);
+                    diagnosticResult.put("pathogen_id", "p1"); // Mocking detection of Red Rot
+                    diagnosticResult.put("confidence_score", 0.89);
+                    
+                    db.collection("diagnostic_results").add(diagnosticResult)
+                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Scan and Diagnosis saved!", Toast.LENGTH_SHORT).show())
+                            .addOnFailureListener(e -> Toast.makeText(this, "Error saving diagnosis", Toast.LENGTH_SHORT).show());
+                })
                 .addOnFailureListener(e -> Toast.makeText(this, "Error saving scan", Toast.LENGTH_SHORT).show());
     }
 
