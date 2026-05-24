@@ -1,7 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Dark/Night theme. -->
     <style name="Base.Theme.CaneScanCRUD" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="appBackgroundColor">@color/bg_dark</item>
+        <item name="appHeaderColor">@color/header_bg_dark</item>
+        <item name="appCardColor">@color/card_bg_dark</item>
+        <item name="appInputColor">@color/input_bg_dark</item>
+        <item name="appPrimaryColor">@color/primary_purple</item>
+        <item name="appTextColor">@color/text_main_dark</item>
     </style>
 </resources>

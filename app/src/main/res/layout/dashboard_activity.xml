@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFDE7"
+    android:background="?attr/appBackgroundColor"
     tools:context=".DashboardActivity">
 
     <!-- Header Section -->
@@ -36,8 +36,6 @@
         android:textColor="@android:color/white"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:background="@drawable/underline_white"
-        android:paddingBottom="4dp"
         app:layout_constraintBottom_toBottomOf="@+id/iv_home_icon"
         app:layout_constraintStart_toEndOf="@+id/iv_home_icon"
         app:layout_constraintTop_toTopOf="@+id/iv_home_icon" />
@@ -188,13 +186,13 @@
                 android:padding="16dp"
                 android:layout_marginBottom="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Plantation Overview"
-                    android:textColor="#84AD7F"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Plantation Overview"
+                        android:textColor="?attr/appPrimaryColor"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -217,14 +215,14 @@
                             android:layout_height="wrap_content"
                             android:text="Scan today"
                             android:textSize="12sp"
-                            android:textColor="#84AD7F" />
+                            android:textColor="?attr/appTextColor" />
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="#84AD7F" />
+                            android:textColor="?attr/appTextColor" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -241,14 +239,14 @@
                             android:layout_height="wrap_content"
                             android:text="Infections"
                             android:textSize="12sp"
-                            android:textColor="#84AD7F" />
+                            android:textColor="?attr/appTextColor" />
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="#84AD7F" />
+                            android:textColor="?attr/appTextColor" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -264,21 +262,21 @@
                             android:layout_height="wrap_content"
                             android:text="Healthy"
                             android:textSize="12sp"
-                            android:textColor="#84AD7F" />
+                            android:textColor="?attr/appTextColor" />
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="#84AD7F" />
+                            android:textColor="?attr/appTextColor" />
                     </LinearLayout>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="#84AD7F"
+                    android:background="?attr/appPrimaryColor"
                     android:layout_marginTop="16dp" />
 
                 <RelativeLayout
@@ -289,7 +287,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="View"
-                        android:textColor="#84AD7F"
+                        android:textColor="?attr/appPrimaryColor"
                         android:layout_centerHorizontal="true"/>
                     <ImageView
                         android:layout_width="20dp"
@@ -297,7 +295,7 @@
                         android:src="@drawable/ic_chevron_right"
                         android:layout_alignParentEnd="true"
                         android:contentDescription="View More"
-                        app:tint="#84AD7F" />
+                        app:tint="?attr/appPrimaryColor" />
                 </RelativeLayout>
             </LinearLayout>
 
@@ -314,7 +312,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Recent Diagnose"
-                    android:textColor="#84AD7F"
+                    android:textColor="?attr/appPrimaryColor"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
@@ -333,20 +331,20 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Sugarcane"
-                        android:textColor="#84AD7F"
+                        android:textColor="?attr/appPrimaryColor"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Condition"
-                        android:textColor="#84AD7F"
+                        android:textColor="?attr/appPrimaryColor"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="#84AD7F" />
+                    android:background="?attr/appPrimaryColor" />
 
                 <!-- Data Row -->
                 <LinearLayout
@@ -364,7 +362,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="---"
-                        android:textColor="#84AD7F" />
+                        android:textColor="?attr/appTextColor" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -376,13 +374,13 @@
                         android:paddingEnd="12dp"
                         android:paddingBottom="4dp"
                         android:text="---"
-                        android:textColor="#84AD7F" />
+                        android:textColor="?attr/appTextColor" />
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="#84AD7F"
+                    android:background="?attr/appPrimaryColor"
                     android:layout_marginTop="12dp" />
 
                 <RelativeLayout
@@ -393,7 +391,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="View"
-                        android:textColor="#84AD7F"
+                        android:textColor="?attr/appPrimaryColor"
                         android:layout_centerHorizontal="true"/>
                     <ImageView
                         android:layout_width="20dp"
@@ -401,7 +399,7 @@
                         android:src="@drawable/ic_chevron_right"
                         android:layout_alignParentEnd="true"
                         android:contentDescription="View More"
-                        app:tint="#84AD7F" />
+                        app:tint="?attr/appPrimaryColor" />
                 </RelativeLayout>
             </LinearLayout>
 

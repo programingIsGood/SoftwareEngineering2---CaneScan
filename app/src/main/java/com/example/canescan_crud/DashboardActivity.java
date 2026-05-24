@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.bumptech.glide.Glide;
 
@@ -22,11 +23,19 @@ public class DashboardActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Load theme preference BEFORE super.onCreate
+        sharedPreferences = getSharedPreferences("CaneScanPrefs", Context.MODE_PRIVATE);
+        boolean isDarkMode = sharedPreferences.getBoolean("dark_mode", false);
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dashboard_activity);
 
         ivProfileHeader = findViewById(R.id.iv_profile);
-        sharedPreferences = getSharedPreferences("CaneScanPrefs", Context.MODE_PRIVATE);
 
         updateProfileImage();
 
