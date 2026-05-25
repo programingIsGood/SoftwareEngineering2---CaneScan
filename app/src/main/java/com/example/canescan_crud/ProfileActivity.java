@@ -251,6 +251,14 @@ public class ProfileActivity extends AppCompatActivity {
             });
         }
 
+        View navHistory = findViewById(R.id.nav_history);
+        if (navHistory != null) {
+            navHistory.setOnClickListener(v -> {
+                Intent intent = new Intent(ProfileActivity.this, HistoryActivity.class);
+                startActivity(intent);
+            });
+        }
+
         View navSettings = findViewById(R.id.nav_settings);
         if (navSettings != null) {
             navSettings.setOnClickListener(v -> {

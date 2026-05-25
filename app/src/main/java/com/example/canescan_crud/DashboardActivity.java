@@ -75,6 +75,13 @@ public class DashboardActivity extends AppCompatActivity {
             });
         }
 
+        View navHistory = findViewById(R.id.nav_history);
+        if (navHistory != null) {
+            navHistory.setOnClickListener(v -> {
+                startActivity(new Intent(DashboardActivity.this, HistoryActivity.class));
+            });
+        }
+
         View navMap = findViewById(R.id.nav_map);
         if (navMap != null) {
             navMap.setOnClickListener(v -> {
