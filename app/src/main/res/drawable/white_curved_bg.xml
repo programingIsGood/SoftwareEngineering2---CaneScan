@@ -4,8 +4,7 @@
     android:height="800dp"
     android:viewportWidth="400"
     android:viewportHeight="800">
-    <!-- A more accurate wave matching the design: peaks on the left, dips on the right -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="?attr/appBackgroundColor"
         android:pathData="M0,220 C100,100 300,350 400,220 L400,800 L0,800 Z" />
 </vector>

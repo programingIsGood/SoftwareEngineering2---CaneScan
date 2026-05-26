@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="?attr/appBackgroundColor"
     tools:context=".LoginActivity">
 
     <ImageView
@@ -35,8 +35,6 @@
         android:textSize="40sp"
         android:textStyle="bold"
         android:fontFamily="sans-serif-condensed"
-        android:paddingBottom="4dp"
-        android:background="@drawable/underline_white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -60,10 +58,13 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="?attr/appCardColor"
+                android:padding="8dp"
+                android:src="@drawable/gmail"
+                android:contentDescription="Email Icon" />
 
             <EditText
                 android:id="@+id/et_email"
@@ -73,8 +74,8 @@
                 android:background="@android:color/transparent"
                 android:hint="Email"
                 android:inputType="textEmailAddress"
-                android:textColor="@android:color/black"
-                android:textColorHint="@android:color/black"
+                android:textColor="?attr/appTextColor"
+                android:textColorHint="?attr/appTextColor"
                 android:textSize="16sp" />
         </LinearLayout>
 
@@ -87,10 +88,14 @@
             android:orientation="horizontal"
             android:padding="2dp">
 
-            <View
+            <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="#E0E0E0" />
+                android:background="?attr/appCardColor"
+                android:padding="8dp"
+                android:src="@drawable/padlocks"
+                android:contentDescription="Password Icon"
+                app:tint="?attr/appPrimaryColor" />
 
             <EditText
                 android:id="@+id/et_password"
@@ -100,20 +105,42 @@
                 android:background="@android:color/transparent"
                 android:hint="Password"
                 android:inputType="textPassword"
-                android:textColor="@android:color/black"
-                android:textColorHint="@android:color/black"
+                android:textColor="?attr/appTextColor"
+                android:textColorHint="?attr/appTextColor"
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_forgot_password"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:text="Forget Password?"
-            android:textColor="#84AD7F"
-            android:textSize="12sp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
 
+            <CheckBox
+                android:id="@+id/cb_stay_signed_in"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stay Signed In"
+                android:textColor="?attr/appTextColor"
+                android:textSize="14sp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tv_forgot_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Forget Password?"
+                android:textColor="?attr/appPrimaryColor"
+                android:textSize="12sp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground" />
+        </LinearLayout>
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
@@ -121,9 +148,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="32dp"
-        android:backgroundTint="#84AD7F"
+        android:backgroundTint="?attr/appPrimaryColor"
         android:padding="12dp"
         android:text="Sign In"
         android:textAllCaps="false"
@@ -134,6 +161,7 @@
         app:layout_constraintTop_toBottomOf="@+id/input_container" />
 
     <LinearLayout
+        android:id="@+id/register_nav_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -153,8 +181,42 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sign up"
-            android:textColor="#84AD7F"
-            android:textStyle="bold" />
+            android:textColor="?attr/appPrimaryColor"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_or"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Or Sign In with"
+        android:textColor="@android:color/darker_gray"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/register_nav_container" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_or">
+
+        <ImageView
+            android:id="@+id/btn_google_signin"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:src="@drawable/chrome1"
+            android:contentDescription="Sign in with Google"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

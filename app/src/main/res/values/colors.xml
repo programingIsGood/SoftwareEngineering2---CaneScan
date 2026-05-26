@@ -2,4 +2,19 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Light Mode Colors -->
+    <color name="bg_light">#FFFDE7</color>
+    <color name="primary_green">#84AD7F</color>
+    <color name="card_bg_light">#F1F8E9</color>
+    <color name="input_bg_light">#FFFFFF</color>
+    <color name="stat_box_bg_light">#DCEDC8</color>
+
+    <!-- Dark Mode Colors (Purple Theme from Image) -->
+    <color name="bg_dark">#121021</color>
+    <color name="primary_purple">#BB86FC</color>
+    <color name="card_bg_dark">#3D3A5D</color>
+    <color name="input_bg_dark">#2A2840</color>
+    <color name="text_main_dark">#E1E0F5</color>
+    <color name="header_bg_dark">#25233D</color>
 </resources>
