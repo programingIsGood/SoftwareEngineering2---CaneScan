@@ -63,19 +63,20 @@
                 android:layout_height="48dp"
                 android:background="?attr/appCardColor"
                 android:padding="8dp"
-                android:src="@drawable/gmail" />
+                android:src="@drawable/gmail"
+                android:contentDescription="Email Icon" />
 
-                <EditText
-                    android:id="@+id/et_email"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:background="@android:color/transparent"
-                    android:hint="Email"
-                    android:inputType="textEmailAddress"
-                    android:textColor="?attr/appTextColor"
-                    android:textColorHint="?attr/appTextColor"
-                    android:textSize="16sp" />
+            <EditText
+                android:id="@+id/et_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:background="@android:color/transparent"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:textColor="?attr/appTextColor"
+                android:textColorHint="?attr/appTextColor"
+                android:textSize="16sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -93,30 +94,53 @@
                 android:background="?attr/appCardColor"
                 android:padding="8dp"
                 android:src="@drawable/padlocks"
+                android:contentDescription="Password Icon"
                 app:tint="?attr/appPrimaryColor" />
 
-                <EditText
-                    android:id="@+id/et_password"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:background="@android:color/transparent"
-                    android:hint="Password"
-                    android:inputType="textPassword"
-                    android:textColor="?attr/appTextColor"
-                    android:textColorHint="?attr/appTextColor"
-                    android:textSize="16sp" />
+            <EditText
+                android:id="@+id/et_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:background="@android:color/transparent"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:textColor="?attr/appTextColor"
+                android:textColorHint="?attr/appTextColor"
+                android:textSize="16sp" />
         </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tv_forgot_password"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:text="Forget Password?"
-                    android:textColor="?attr/appPrimaryColor"
-                    android:textSize="12sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
 
+            <CheckBox
+                android:id="@+id/cb_stay_signed_in"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stay Signed In"
+                android:textColor="?attr/appTextColor"
+                android:textSize="14sp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/tv_forgot_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Forget Password?"
+                android:textColor="?attr/appPrimaryColor"
+                android:textSize="12sp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground" />
+        </LinearLayout>
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
@@ -124,7 +148,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="32dp"
         android:backgroundTint="?attr/appPrimaryColor"
         android:padding="12dp"
@@ -158,7 +182,10 @@
             android:layout_height="wrap_content"
             android:text="Sign up"
             android:textColor="?attr/appPrimaryColor"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground" />
     </LinearLayout>
 
     <TextView
@@ -186,6 +213,7 @@
             android:layout_width="45dp"
             android:layout_height="45dp"
             android:src="@drawable/chrome1"
+            android:contentDescription="Sign in with Google"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless" />

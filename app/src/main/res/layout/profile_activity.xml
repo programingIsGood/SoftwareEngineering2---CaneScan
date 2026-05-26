@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/windowBackground"
+    android:background="?attr/appBackgroundColor"
     tools:context=".ProfileActivity">
 
-    <!-- Header Section -->
     <View
         android:id="@+id/header_bg"
         android:layout_width="match_parent"
@@ -36,12 +35,9 @@
         android:textColor="@android:color/white"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:background="@drawable/underline_white"
-        android:paddingBottom="4dp"
         app:layout_constraintBottom_toBottomOf="@+id/iv_settings_icon"
         app:layout_constraintStart_toEndOf="@+id/iv_settings_icon"
-        app:layout_constraintTop_toTopOf="@+id/iv_settings_icon"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="@+id/iv_settings_icon" />
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/iv_profile_circle"
@@ -58,7 +54,6 @@
         app:layout_constraintTop_toTopOf="@+id/header_bg"
         app:layout_constraintVertical_bias="0.6" />
 
-    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
@@ -77,11 +72,13 @@
             android:gravity="center"
             android:orientation="vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_home"
+                android:contentDescription="Home Navigation"
                 app:tint="@android:color/white" />
             <TextView
                 android:layout_width="wrap_content"
@@ -99,11 +96,13 @@
             android:gravity="center"
             android:orientation="vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_map"
+                android:contentDescription="Map Navigation"
                 app:tint="@android:color/white" />
             <TextView
                 android:layout_width="wrap_content"
@@ -121,11 +120,13 @@
             android:gravity="center"
             android:orientation="vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_history"
+                android:contentDescription="History Navigation"
                 app:tint="@android:color/white" />
             <TextView
                 android:layout_width="wrap_content"
@@ -143,11 +144,13 @@
             android:gravity="center"
             android:orientation="vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_settings"
+                android:contentDescription="Current Settings Navigation"
                 app:tint="@android:color/white" />
             <TextView
                 android:layout_width="wrap_content"
@@ -158,7 +161,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Main Content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -172,7 +174,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Profile Settings Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -199,7 +200,8 @@
                     app:civ_circle_background_color="@android:color/white"
                     android:contentDescription="Profile avatar"
                     android:clickable="true"
-                    android:focusable="true" />
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
 
                 <TextView
                     android:id="@+id/tv_upload_clear"
@@ -212,7 +214,8 @@
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:clickable="true"
-                    android:focusable="true" />
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -235,7 +238,8 @@
                         android:hint="Enter Username"
                         android:textColor="?attr/appTextColor"
                         android:textSize="14sp"
-                        android:padding="0dp" />
+                        android:padding="0dp"
+                        android:inputType="textPersonName" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -294,12 +298,12 @@
                         android:hint="Enter Bio"
                         android:textColor="?attr/appTextColor"
                         android:textSize="14sp"
-                        android:padding="0dp" />
+                        android:padding="0dp"
+                        android:inputType="textLongMessage" />
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Accessibility Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -381,7 +385,6 @@
 
             </LinearLayout>
 
-            <!-- Account Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -408,7 +411,8 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:clickable="true"
-                    android:focusable="true" />
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground" />
 
                 <TextView
                     android:id="@+id/tv_logout"
@@ -420,7 +424,8 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:clickable="true"
-                    android:focusable="true" />
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground" />
 
             </LinearLayout>
 

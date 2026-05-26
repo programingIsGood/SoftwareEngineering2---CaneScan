@@ -7,11 +7,10 @@
     android:background="?attr/appBackgroundColor"
     tools:context=".DashboardActivity">
 
-    <!-- Header Section -->
     <View
         android:id="@+id/header_bg"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
+        android:layout_height="110dp"
         android:background="@drawable/dashboard_header_bg"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -20,7 +19,7 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="50dp"
         android:src="@drawable/ic_home"
         android:contentDescription="Home Icon"
         app:layout_constraintStart_toStartOf="parent"
@@ -42,20 +41,20 @@
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/iv_profile"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:layout_marginEnd="24dp"
         android:src="@drawable/user"
         app:civ_circle_background_color="@android:color/white"
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="Profile Picture"
+        android:background="?attr/selectableItemBackgroundBorderless"
         app:layout_constraintBottom_toBottomOf="@+id/header_bg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/header_bg"
-        app:layout_constraintVertical_bias="0.6" />
+        app:layout_constraintVertical_bias="0.8" />
 
-    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
@@ -75,7 +74,8 @@
             android:orientation="vertical"
             android:baselineAligned="false"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -99,7 +99,8 @@
             android:orientation="vertical"
             android:baselineAligned="false"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -123,7 +124,8 @@
             android:orientation="vertical"
             android:baselineAligned="false"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -147,7 +149,8 @@
             android:orientation="vertical"
             android:baselineAligned="false"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -163,7 +166,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Main Content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -177,7 +179,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Plantation Overview Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -186,13 +187,13 @@
                 android:padding="16dp"
                 android:layout_marginBottom="16dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Plantation Overview"
-                        android:textColor="?attr/appPrimaryColor"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Plantation Overview"
+                    android:textColor="?attr/appPrimaryColor"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -217,6 +218,7 @@
                             android:textSize="12sp"
                             android:textColor="?attr/appTextColor" />
                         <TextView
+                            android:id="@+id/tv_scans_today"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
@@ -241,6 +243,7 @@
                             android:textSize="12sp"
                             android:textColor="?attr/appTextColor" />
                         <TextView
+                            android:id="@+id/tv_infections_total"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
@@ -264,6 +267,7 @@
                             android:textSize="12sp"
                             android:textColor="?attr/appTextColor" />
                         <TextView
+                            android:id="@+id/tv_healthy_total"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
@@ -280,9 +284,13 @@
                     android:layout_marginTop="16dp" />
 
                 <RelativeLayout
+                    android:id="@+id/btn_view_plantation"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -299,7 +307,6 @@
                 </RelativeLayout>
             </LinearLayout>
 
-            <!-- Recent Diagnose Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -316,7 +323,6 @@
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
-                <!-- Header Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -346,7 +352,6 @@
                     android:layout_height="1dp"
                     android:background="?attr/appPrimaryColor" />
 
-                <!-- Data Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -358,12 +363,14 @@
                     android:paddingBottom="4dp"
                     android:gravity="center_vertical">
                     <TextView
+                        android:id="@+id/tv_recent_name"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="---"
                         android:textColor="?attr/appTextColor" />
                     <TextView
+                        android:id="@+id/tv_recent_condition"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/condition_label_bg"
@@ -384,9 +391,13 @@
                     android:layout_marginTop="12dp" />
 
                 <RelativeLayout
+                    android:id="@+id/btn_view_recent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -398,7 +409,7 @@
                         android:layout_height="20dp"
                         android:src="@drawable/ic_chevron_right"
                         android:layout_alignParentEnd="true"
-                        android:contentDescription="View More"
+                        android:contentDescription="View More Recent Diagnostics"
                         app:tint="?attr/appPrimaryColor" />
                 </RelativeLayout>
             </LinearLayout>
