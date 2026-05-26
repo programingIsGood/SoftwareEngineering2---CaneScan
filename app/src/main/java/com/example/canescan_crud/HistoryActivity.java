@@ -95,6 +95,9 @@ public class HistoryActivity extends AppCompatActivity {
         setupNavigation();
         updateFilterUI();
         loadHistory();
+
+        AccessibilityHelper.init(this);
+        AccessibilityHelper.speak("You are in Scan History");
     }
 
     private void setupListeners() {
@@ -113,6 +116,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         if (btnAll != null) {
             btnAll.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 currentFilter = "All";
                 updateFilterUI();
                 applyFilters();
@@ -121,6 +125,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         if (btnInfected != null) {
             btnInfected.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 currentFilter = "Infected";
                 updateFilterUI();
                 applyFilters();
@@ -129,6 +134,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         if (btnHealthy != null) {
             btnHealthy.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 currentFilter = "Healthy";
                 updateFilterUI();
                 applyFilters();
@@ -137,6 +143,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         if (ivProfile != null) {
             ivProfile.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 startActivity(new Intent(this, ProfileActivity.class));
             });
         }
@@ -264,6 +271,7 @@ public class HistoryActivity extends AppCompatActivity {
         View navHome = findViewById(R.id.nav_home);
         if (navHome != null) {
             navHome.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 startActivity(new Intent(this, DashboardActivity.class));
                 finish();
             });
@@ -271,6 +279,7 @@ public class HistoryActivity extends AppCompatActivity {
         View navMap = findViewById(R.id.nav_map);
         if (navMap != null) {
             navMap.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 startActivity(new Intent(this, MapActivity.class));
                 finish();
             });
@@ -278,8 +287,17 @@ public class HistoryActivity extends AppCompatActivity {
         View navSettings = findViewById(R.id.nav_settings);
         if (navSettings != null) {
             navSettings.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 startActivity(new Intent(this, ProfileActivity.class));
                 finish();
+            });
+        }
+        
+        View navHistory = findViewById(R.id.nav_history);
+        if (navHistory != null) {
+            navHistory.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
+                // Already on history
             });
         }
     }
