@@ -11,7 +11,7 @@
     <View
         android:id="@+id/header_bg"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
+        android:layout_height="110dp"
         android:background="@drawable/dashboard_header_bg"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -20,7 +20,7 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="50dp"
         android:src="@drawable/ic_home"
         android:contentDescription="Home Icon"
         app:layout_constraintStart_toStartOf="parent"
@@ -42,8 +42,8 @@
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/iv_profile"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:layout_marginEnd="24dp"
         android:src="@drawable/user"
         app:civ_circle_background_color="@android:color/white"
@@ -53,7 +53,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/header_bg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/header_bg"
-        app:layout_constraintVertical_bias="0.6" />
+        app:layout_constraintVertical_bias="0.8" />
 
     <!-- Bottom Navigation -->
     <LinearLayout
@@ -280,9 +280,13 @@
                     android:layout_marginTop="16dp" />
 
                 <RelativeLayout
+                    android:id="@+id/btn_view_plantation"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -384,9 +388,13 @@
                     android:layout_marginTop="12dp" />
 
                 <RelativeLayout
+                    android:id="@+id/btn_view_recent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp">
+                    android:layout_marginTop="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

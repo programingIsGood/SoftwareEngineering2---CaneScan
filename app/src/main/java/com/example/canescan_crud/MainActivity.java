@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 100;
     private GoogleSignInClient mGoogleSignInClient;
     private FirebaseAuth mAuth;
-    private FirebaseFirestore db; // Added Firestore instance
+    private FirebaseFirestore db;
     private ImageView btnGoogle;
     private com.google.android.material.button.MaterialButton btnLogin, btnRegister;
 
@@ -46,16 +46,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance(); // Initialize Firestore
+
+        // 0. Auto-Login Logic (Stay Signed In)
+        boolean staySignedIn = prefs.getBoolean("stay_signed_in", false);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (staySignedIn && currentUser != null) {
+            startActivity(new Intent(MainActivity.this, DashboardActivity.class));
+            finish();
+            return;
+        }
+
+        setContentView(R.layout.activity_main);
+
+        db = FirebaseFirestore.getInstance();
 
         btnGoogle = findViewById(R.id.btn_google_signin);
         btnLogin = findViewById(R.id.btn_login);
         btnRegister = findViewById(R.id.btn_register);
 
-        // 1. Configure Google Sign-In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -63,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // 2. Set Click Listeners
         btnGoogle.setOnClickListener(v -> signIn());
 
         btnLogin.setOnClickListener(v ->
@@ -100,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Save user data to Firestore before navigating
                             saveUserToFirestore(user);
                         }
                     } else {
@@ -111,22 +119,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void saveUserToFirestore(FirebaseUser user) {
         String userId = user.getUid();
-
-        // 1. Prepare the data map combining both snippets
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("name", user.getDisplayName());
         userMap.put("email", user.getEmail());
-        userMap.put("role", "user"); // Default role from snippet 1
-        userMap.put("email_verified_at", FieldValue.serverTimestamp()); // Verified via Google from snippet 2
+        userMap.put("role", "user");
+        userMap.put("email_verified_at", FieldValue.serverTimestamp());
         userMap.put("updated_at", FieldValue.serverTimestamp());
 
-        // 2. Check if the user exists to set 'created_at' only once
         db.collection("users").document(userId).get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null && !task.getResult().exists()) {
                 userMap.put("created_at", FieldValue.serverTimestamp());
             }
 
-            // 3. Write/Merge data into Firestore
             db.collection("users").document(userId)
                     .set(userMap, SetOptions.merge())
                     .addOnSuccessListener(aVoid -> {
@@ -135,7 +139,6 @@ public class MainActivity extends AppCompatActivity {
                         finish();
                     })
                     .addOnFailureListener(e -> {
-                        // Fail-safe: Notify user but proceed anyway so they aren't blocked
                         Toast.makeText(MainActivity.this, "Error saving profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(MainActivity.this, DashboardActivity.class));
                         finish();

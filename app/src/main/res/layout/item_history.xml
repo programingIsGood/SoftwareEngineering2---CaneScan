@@ -1,76 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="?attr/appCardColor">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:gravity="center_vertical"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="16dp">
 
-        <ImageView
-            android:id="@+id/iv_scan_image"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/sugarcane_close"
-            android:background="@drawable/rounded_corners"
-            android:clipToOutline="true" />
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/tv_scan_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            android:orientation="vertical"
-            android:layout_gravity="center_vertical">
+            android:text="Section Name"
+            android:textColor="?attr/appTextColor"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tv_pathogen_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Red Rot"
-                android:textColor="?attr/appPrimaryColor"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tv_status_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/condition_label_bg"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="4dp"
+            android:text="Status"
+            android:textColor="?attr/appTextColor"
+            android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/tv_timestamp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Oct 24, 2023 • 10:30 AM"
-                android:textColor="?attr/appTextColor"
-                android:alpha="0.7"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp" />
-
-            <TextView
-                android:id="@+id/tv_confidence"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Confidence: 95%"
-                android:textColor="?attr/appTextColor"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <ImageView
-            android:id="@+id/btn_delete"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:padding="4dp"
-            android:src="@drawable/ic_history"
-            android:layout_gravity="center_vertical"
-            app:tint="@android:color/holo_red_dark"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/appTextColor"
+        android:alpha="0.2" />
+
+</LinearLayout>

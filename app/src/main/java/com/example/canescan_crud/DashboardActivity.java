@@ -61,8 +61,13 @@ public class DashboardActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences("CaneScanPrefs", Context.MODE_PRIVATE);
 
         updateProfileImage();
+        
+        // Initialize Accessibility Helper and speak entry narration
+        AccessibilityHelper.init(this);
+        AccessibilityHelper.speak("You're in Dashboard");
 
         ivProfileHeader.setOnClickListener(v -> {
+            AccessibilityHelper.handleViewClick(this, v);
             Intent intent = new Intent(DashboardActivity.this, ProfileActivity.class);
             startActivity(intent);
         });
@@ -70,6 +75,7 @@ public class DashboardActivity extends AppCompatActivity {
         View navSettings = findViewById(R.id.nav_settings);
         if (navSettings != null) {
             navSettings.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 Intent intent = new Intent(DashboardActivity.this, ProfileActivity.class);
                 startActivity(intent);
             });
@@ -78,6 +84,7 @@ public class DashboardActivity extends AppCompatActivity {
         View navHistory = findViewById(R.id.nav_history);
         if (navHistory != null) {
             navHistory.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 startActivity(new Intent(DashboardActivity.this, HistoryActivity.class));
             });
         }
@@ -85,6 +92,7 @@ public class DashboardActivity extends AppCompatActivity {
         View navMap = findViewById(R.id.nav_map);
         if (navMap != null) {
             navMap.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 startActivity(new Intent(DashboardActivity.this, MapActivity.class));
             });
         }
@@ -92,15 +100,34 @@ public class DashboardActivity extends AppCompatActivity {
         View navHome = findViewById(R.id.nav_home);
         if (navHome != null) {
             navHome.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 Intent intent = new Intent(DashboardActivity.this, DashboardActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
             });
         }
 
+        // Dashboard Links to History as requested
+        View btnViewPlantation = findViewById(R.id.btn_view_plantation);
+        if (btnViewPlantation != null) {
+            btnViewPlantation.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
+                startActivity(new Intent(DashboardActivity.this, HistoryActivity.class));
+            });
+        }
+
+        View btnViewRecent = findViewById(R.id.btn_view_recent);
+        if (btnViewRecent != null) {
+            btnViewRecent.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
+                startActivity(new Intent(DashboardActivity.this, HistoryActivity.class));
+            });
+        }
+
         Button btnScanNow = findViewById(R.id.btn_scan_now);
         if (btnScanNow != null) {
             btnScanNow.setOnClickListener(v -> {
+                AccessibilityHelper.handleViewClick(this, v);
                 checkLocationPermissionAndScan();
             });
         }
@@ -160,22 +187,21 @@ public class DashboardActivity extends AppCompatActivity {
         scanLog.put("longitude", lon);
         scanLog.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
         scanLog.put("image_url", "https://firebasestorage.googleapis.com/.../sample.jpg");
+        scanLog.put("name", "New Section");
+        scanLog.put("description", "Capture at " + lat + ", " + lon);
+        scanLog.put("type", "Healthy"); // Default to healthy for placeholder
 
         db.collection("scan_logs").add(scanLog)
                 .addOnSuccessListener(documentReference -> {
                     String scanId = documentReference.getId();
-                    
-                    // 2. Create associated Diagnostic Result (Schema: FK scan_id, FK pathogen_id)
                     Map<String, Object> diagnosticResult = new HashMap<>();
                     diagnosticResult.put("scan_id", scanId);
-                    diagnosticResult.put("pathogen_id", "p1"); // Mocking detection of Red Rot
-                    diagnosticResult.put("confidence_score", 0.89);
+                    diagnosticResult.put("pathogen_id", "p1");
+                    diagnosticResult.put("confidence_score", 0.95);
                     
                     db.collection("diagnostic_results").add(diagnosticResult)
-                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Scan and Diagnosis saved!", Toast.LENGTH_SHORT).show())
-                            .addOnFailureListener(e -> Toast.makeText(this, "Error saving diagnosis", Toast.LENGTH_SHORT).show());
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Error saving scan", Toast.LENGTH_SHORT).show());
+                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Scan saved!", Toast.LENGTH_SHORT).show());
+                });
     }
 
     @Override

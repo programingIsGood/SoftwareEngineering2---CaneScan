@@ -3,36 +3,36 @@ package com.example.canescan_crud;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.bumptech.glide.Glide;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class HistoryActivity extends AppCompatActivity {
 
     private RecyclerView rvHistory;
     private HistoryAdapter adapter;
-    private List<Map<String, Object>> historyList;
-    private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
+    private List<Map<String, Object>> fullHistoryList;
+    private EditText etSearch;
+    private TextView btnAll, btnInfected, btnHealthy;
+    private CircleImageView ivProfile;
+    private String currentFilter = "All";
     private TextView tvEmpty;
 
     @Override
@@ -48,90 +48,109 @@ public class HistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        db = FirebaseFirestore.getInstance();
-        mAuth = FirebaseAuth.getInstance();
-
         rvHistory = findViewById(R.id.rv_history);
-        tvEmpty = findViewById(R.id.tv_empty);
+        etSearch = findViewById(R.id.et_search);
+        btnAll = findViewById(R.id.btn_filter_all);
+        btnInfected = findViewById(R.id.btn_filter_infected);
+        btnHealthy = findViewById(R.id.btn_filter_healthy);
+        ivProfile = findViewById(R.id.iv_profile_history);
+        tvEmpty = findViewById(R.id.tv_empty_history);
+
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
 
-        historyList = new ArrayList<>();
-        adapter = new HistoryAdapter(historyList, this::deleteHistoryItem);
+        // Start with an empty list as requested
+        fullHistoryList = new ArrayList<>();
+
+        // Use 2-argument constructor with null listener to fix compilation error
+        adapter = new HistoryAdapter(new ArrayList<>(fullHistoryList), null);
         rvHistory.setAdapter(adapter);
 
-        findViewById(R.id.iv_back).setOnClickListener(v -> finish());
-
+        updateEmptyState();
+        setupListeners();
+        updateProfileImage();
         setupNavigation();
-        loadHistory();
+        updateFilterUI();
     }
 
-    private void loadHistory() {
-        String userId = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : null;
-        if (userId == null) return;
+    private void setupListeners() {
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
-        db.collection("scan_logs")
-                .whereEqualTo("user_id", userId)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    historyList.clear();
-                    List<Task<Void>> tasks = new ArrayList<>();
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                applyFilters();
+            }
 
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Map<String, Object> data = document.getData();
-                        data.put("id", document.getId());
-                        
-                        // We need to fetch diagnostic results for each scan to get pathogen name and confidence
-                        Task<Void> task = db.collection("diagnostic_results")
-                                .whereEqualTo("scan_id", document.getId())
-                                .limit(1)
-                                .get()
-                                .continueWithTask(diagTask -> {
-                                    if (diagTask.isSuccessful() && !diagTask.getResult().isEmpty()) {
-                                        DocumentSnapshot diagDoc = diagTask.getResult().getDocuments().get(0);
-                                        data.put("confidence_score", diagDoc.getDouble("confidence_score"));
-                                        String pathogenId = diagDoc.getString("pathogen_id");
-                                        
-                                        if (pathogenId != null) {
-                                            return db.collection("pathogens").document(pathogenId).get()
-                                                    .addOnSuccessListener(pathogenDoc -> {
-                                                        data.put("pathogen_name", pathogenDoc.getString("common_name"));
-                                                    }).onSuccessTask(t -> Tasks.forResult(null));
-                                        }
-                                    }
-                                    return Tasks.forResult(null);
-                                });
-                        tasks.add(task);
-                        historyList.add(data);
-                    }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
 
-                    Tasks.whenAllComplete(tasks).addOnCompleteListener(t -> {
-                        adapter.notifyDataSetChanged();
-                        tvEmpty.setVisibility(historyList.isEmpty() ? View.VISIBLE : View.GONE);
-                    });
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        btnAll.setOnClickListener(v -> {
+            currentFilter = "All";
+            updateFilterUI();
+            applyFilters();
+        });
+
+        btnInfected.setOnClickListener(v -> {
+            currentFilter = "Infected";
+            updateFilterUI();
+            applyFilters();
+        });
+
+        btnHealthy.setOnClickListener(v -> {
+            currentFilter = "Healthy";
+            updateFilterUI();
+            applyFilters();
+        });
+
+        ivProfile.setOnClickListener(v -> {
+            startActivity(new Intent(this, ProfileActivity.class));
+        });
     }
 
-    private void deleteHistoryItem(int position) {
-        Map<String, Object> item = historyList.get(position);
-        String scanId = (String) item.get("id");
+    private void updateFilterUI() {
+        // Simple UI feedback for filters using alpha
+        btnAll.setAlpha(currentFilter.equals("All") ? 1.0f : 0.6f);
+        btnInfected.setAlpha(currentFilter.equals("Infected") ? 1.0f : 0.6f);
+        btnHealthy.setAlpha(currentFilter.equals("Healthy") ? 1.0f : 0.6f);
+    }
 
-        db.collection("scan_logs").document(scanId).delete()
-                .addOnSuccessListener(aVoid -> {
-                    // Also delete associated diagnostic results
-                    db.collection("diagnostic_results").whereEqualTo("scan_id", scanId).get()
-                            .addOnSuccessListener(queryDocumentSnapshots -> {
-                                for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                                    doc.getReference().delete();
-                                }
-                            });
-                    
-                    historyList.remove(position);
-                    adapter.notifyItemRemoved(position);
-                    tvEmpty.setVisibility(historyList.isEmpty() ? View.VISIBLE : View.GONE);
-                    Toast.makeText(this, "Record deleted", Toast.LENGTH_SHORT).show();
-                });
+    private void applyFilters() {
+        String query = etSearch.getText().toString().toLowerCase();
+
+        List<Map<String, Object>> result = fullHistoryList.stream()
+            .filter(item -> {
+                String name = String.valueOf(item.getOrDefault("name", ""));
+                boolean matchesQuery = name.toLowerCase().contains(query);
+
+                String type = String.valueOf(item.getOrDefault("type", "All"));
+                boolean matchesFilter = currentFilter.equals("All") || type.equals(currentFilter);
+
+                return matchesQuery && matchesFilter;
+            })
+            .collect(Collectors.toList());
+
+        adapter.updateList(result);
+        updateEmptyState();
+    }
+
+    private void updateEmptyState() {
+        if (adapter.getItemCount() == 0) {
+            tvEmpty.setVisibility(View.VISIBLE);
+            rvHistory.setVisibility(View.GONE);
+        } else {
+            tvEmpty.setVisibility(View.GONE);
+            rvHistory.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void updateProfileImage() {
+        SharedPreferences sharedPreferences = getSharedPreferences("CaneScanPrefs", Context.MODE_PRIVATE);
+        String savedImageUri = sharedPreferences.getString("profile_image_uri", null);
+        if (savedImageUri != null) {
+            Glide.with(this).load(Uri.parse(savedImageUri)).placeholder(R.drawable.user).into(ivProfile);
+        }
     }
 
     private void setupNavigation() {
@@ -142,6 +161,9 @@ public class HistoryActivity extends AppCompatActivity {
         findViewById(R.id.nav_map).setOnClickListener(v -> {
             startActivity(new Intent(this, MapActivity.class));
             finish();
+        });
+        findViewById(R.id.nav_history).setOnClickListener(v -> {
+            // Already here
         });
         findViewById(R.id.nav_settings).setOnClickListener(v -> {
             startActivity(new Intent(this, ProfileActivity.class));
