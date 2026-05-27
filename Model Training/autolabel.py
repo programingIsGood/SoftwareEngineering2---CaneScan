@@ -18,6 +18,10 @@ HUMAN_REVIEW_DIR = "C:\\Users\\Renz\\Documents\\GitHub\\SoftwareEngineering2---C
 HIGH_CONF_THRESH = 0.85  # ≥ 85% confidence: Auto-save raw images and labels
 LOW_CONF_THRESH = 0.40   # 40% - 84% confidence: Send to human review folder
 
+# --- NEW RENAMING FEATURE CONFIGURATION ---
+ENABLE_RENAMING = True   # Set to True to rename output files sequentially, False to keep original names
+NEW_PREFIX = "healthyy"   # Prefix used if renaming is enabled (e.g., healthy_00001.jpg)
+
 # =====================================================================
 # INITIALIZATION
 # =====================================================================
@@ -38,6 +42,9 @@ unlabeled_images = [
 
 print(f"Found {len(unlabeled_images)} unlabeled images. Starting autolabeling...\n")
 
+# Initialize sequential counter for renaming feature
+file_counter = 1
+
 # =====================================================================
 # AUTOLABELING LOOP
 # =====================================================================
@@ -57,31 +64,43 @@ for img_name in unlabeled_images:
     min_conf = min(confidences)
     max_conf = max(confidences)
     
-    # Base filename without extension (e.g., 'image1' instead of 'image1.jpg')
-    base_name = Path(img_name).stem
+    # Determine target base filename and file extension
+    img_ext = Path(img_name).suffix
+    if ENABLE_RENAMING:
+        # e.g., "healthy_00001"
+        base_name = f"{NEW_PREFIX}_{file_counter:05d}"
+        target_img_name = f"{base_name}{img_ext}"
+    else:
+        base_name = Path(img_name).stem
+        target_img_name = img_name
     
     # Tier 1: HIGH CONFIDENCE (Auto-Accept)
     # Every single detected object in the image is above your high threshold
     if min_conf >= HIGH_CONF_THRESH:
         # Copy original image to the auto-accepted images folder
-        shutil.copy(img_path, os.path.join(AUTO_ACCEPTED_DIR, "images", img_name))
+        shutil.copy(img_path, os.path.join(AUTO_ACCEPTED_DIR, "images", target_img_name))
         
         # Save the annotations as a standard YOLO text file (.txt)
         label_file_path = os.path.join(AUTO_ACCEPTED_DIR, "labels", f"{base_name}.txt")
         results.save_txt(label_file_path)
-        print(f"[AUTO-ACCEPTED] {img_name} (Min Conf: {min_conf:.2f})")
+        print(f"[AUTO-ACCEPTED] {img_name} -> {target_img_name} (Min Conf: {min_conf:.2f})")
+        
+        # Increment counter only if a file was successfully processed and saved
+        file_counter += 1
         
     # Tier 2: MEDIUM CONFIDENCE (Human Review)
     # At least one object fell below 85%, but the highest prediction is above 40%
     elif max_conf >= LOW_CONF_THRESH:
-        # TIER 2: MEDIUM CONFIDENCE (Human Review)
-        # FIX: Copy the CLEAN, un-annotated original image instead of using results.save()
-        shutil.copy(img_path, os.path.join(HUMAN_REVIEW_DIR, img_name))
+        # Copy the CLEAN, un-annotated original image
+        shutil.copy(img_path, os.path.join(HUMAN_REVIEW_DIR, target_img_name))
         
         # Save the raw .txt label file right next to it
         raw_label_path = os.path.join(HUMAN_REVIEW_DIR, f"{base_name}.txt")
         results.save_txt(raw_label_path)
-        print(f"[HUMAN REVIEW]  {img_name} (Max Conf: {max_conf:.2f}) - Clean Image Saved")
+        print(f"[HUMAN REVIEW]  {img_name} -> {target_img_name} (Max Conf: {max_conf:.2f}) - Clean Image Saved")
+        
+        # Increment counter only if a file was successfully processed and saved
+        file_counter += 1
         
     # Tier 3: LOW CONFIDENCE (Rejected)
     else:

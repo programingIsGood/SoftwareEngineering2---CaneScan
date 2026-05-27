@@ -14,3 +14,4 @@ nc: 1
 # This maps the YOLO index 0 to your actual label name
 names:
   0: Healthy
+  

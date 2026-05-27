@@ -14,3 +14,7 @@ nc: 1
 # This maps the YOLO index 0 to your actual label name
 names:
   0: Healthy
+  1: Red Rot
+  2: Rust
+  3: Yellow Leaf
+  5: Smut
