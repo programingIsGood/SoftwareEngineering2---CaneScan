@@ -10,7 +10,7 @@
     <View
         android:id="@+id/header_bg"
         android:layout_width="match_parent"
-        android:layout_height="110dp"
+        android:layout_height="80dp"
         android:background="@drawable/dashboard_header_bg"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -19,9 +19,9 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="50dp"
         android:src="@drawable/ic_home"
         android:contentDescription="Home Icon"
+        app:layout_constraintBottom_toBottomOf="@+id/header_bg"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@android:color/white" />
@@ -52,8 +52,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         app:layout_constraintBottom_toBottomOf="@+id/header_bg"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/header_bg"
-        app:layout_constraintVertical_bias="0.8" />
+        app:layout_constraintTop_toTopOf="@+id/header_bg" />
 
     <LinearLayout
         android:id="@+id/bottom_nav"
