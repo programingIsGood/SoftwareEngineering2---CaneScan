@@ -1,0 +1,13 @@
+train: /kaggle/working/data/train/images
+val: /kaggle/working/data/validation
+test: ../test/images
+nc: 1
+names:
+- Yellow Leaf
+roboflow:
+  workspace: dataset-bounding-box
+  project: dataset-bounding-box
+  version: dataset
+  license: Private
+  url: https://app.roboflow.com/dataset-bounding-box/dataset-bounding-box/dataset
+path: /kaggle/input/datasets/ferdinandjrpalmones/yellow-leaf
