@@ -1,5 +1,6 @@
 package com.example.canescan_crud;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,7 +9,10 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.Window;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,14 +24,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -38,6 +45,7 @@ public class HistoryActivity extends AppCompatActivity {
     private RecyclerView rvHistory;
     private HistoryAdapter adapter;
     private List<Map<String, Object>> fullHistoryList;
+    private List<Map<String, Object>> currentFilteredList;
     private EditText etSearch;
     private TextView btnAll, btnInfected, btnHealthy;
     private CircleImageView ivProfile;
@@ -81,8 +89,20 @@ public class HistoryActivity extends AppCompatActivity {
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
 
         fullHistoryList = new ArrayList<>();
+        currentFilteredList = new ArrayList<>();
+
         // Instantiate using the interactive contextual reference callback pointing directly to localized deletion logic
-        adapter = new HistoryAdapter(new ArrayList<>(fullHistoryList), this::deleteHistoryItem);
+        adapter = new HistoryAdapter(currentFilteredList, new HistoryAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                showScanDetailDialog(position);
+            }
+
+            @Override
+            public void onDeleteClick(int position) {
+                deleteHistoryItem(position);
+            }
+        });
         rvHistory.setAdapter(adapter);
 
         View backButton = findViewById(R.id.iv_back);
@@ -158,7 +178,7 @@ public class HistoryActivity extends AppCompatActivity {
     private void applyFilters() {
         String query = etSearch != null ? etSearch.getText().toString().toLowerCase() : "";
 
-        List<Map<String, Object>> filteredResult = fullHistoryList.stream()
+        currentFilteredList = fullHistoryList.stream()
                 .filter(item -> {
                     // Name match validation checks
                     String name = String.valueOf(item.getOrDefault("name", ""));
@@ -172,7 +192,7 @@ public class HistoryActivity extends AppCompatActivity {
                 })
                 .collect(Collectors.toList());
 
-        adapter.updateList(filteredResult);
+        adapter.updateList(currentFilteredList);
         updateEmptyState();
     }
 
@@ -236,9 +256,9 @@ public class HistoryActivity extends AppCompatActivity {
 
     private void deleteHistoryItem(int position) {
         // Map UI position context targeting back into actual references layout
-        if (fullHistoryList.isEmpty() || position >= fullHistoryList.size()) return;
+        if (currentFilteredList.isEmpty() || position >= currentFilteredList.size()) return;
 
-        Map<String, Object> item = fullHistoryList.get(position);
+        Map<String, Object> item = currentFilteredList.get(position);
         String scanId = (String) item.get("id");
 
         db.collection("scan_logs").document(scanId).delete()
@@ -251,11 +271,70 @@ public class HistoryActivity extends AppCompatActivity {
                                 }
                             });
 
-                    fullHistoryList.remove(position);
+                    fullHistoryList.remove(item);
                     applyFilters(); // Live update filtering collection matrices calculations layout UI frames
                     Toast.makeText(this, "Record deleted", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> Toast.makeText(this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void showScanDetailDialog(int position) {
+        if (currentFilteredList.isEmpty() || position >= currentFilteredList.size()) return;
+        Map<String, Object> item = currentFilteredList.get(position);
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_scan_detail);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        ImageView ivImage = dialog.findViewById(R.id.iv_detail_image_full);
+        TextView tvName = dialog.findViewById(R.id.tv_detail_name);
+        TextView tvType = dialog.findViewById(R.id.tv_detail_type);
+        TextView tvDate = dialog.findViewById(R.id.tv_detail_timestamp);
+        TextView tvDesc = dialog.findViewById(R.id.tv_detail_description);
+        Button btnClose = dialog.findViewById(R.id.btn_close_detail);
+
+        tvName.setText(String.valueOf(item.getOrDefault("name", "Unknown Section")));
+        tvType.setText("Condition: " + item.getOrDefault("type", item.getOrDefault("status", "Unknown")));
+
+        Timestamp ts = (Timestamp) item.get("timestamp");
+        if (ts != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault());
+            tvDate.setText("Date: " + sdf.format(ts.toDate()));
+        }
+
+        tvDesc.setText(String.valueOf(item.getOrDefault("description", "No description provided.")));
+
+        String imageUrl = (String) item.get("image_url");
+        Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.sugarcane_close)
+                .error(R.drawable.sugarcane_close)
+                .into(ivImage);
+
+        ivImage.setOnClickListener(v -> showFullImageDialog(imageUrl));
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void showFullImageDialog(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) return;
+
+        final Dialog fullImageDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        fullImageDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        fullImageDialog.setContentView(R.layout.dialog_full_image);
+
+        ImageView ivFull = fullImageDialog.findViewById(R.id.iv_full_image);
+        View btnBack = fullImageDialog.findViewById(R.id.btn_back_full);
+
+        Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.sugarcane_close)
+                .into(ivFull);
+
+        btnBack.setOnClickListener(v -> fullImageDialog.dismiss());
+        fullImageDialog.show();
     }
 
     private void updateProfileImage() {
@@ -292,7 +371,7 @@ public class HistoryActivity extends AppCompatActivity {
                 finish();
             });
         }
-        
+
         View navHistory = findViewById(R.id.nav_history);
         if (navHistory != null) {
             navHistory.setOnClickListener(v -> {

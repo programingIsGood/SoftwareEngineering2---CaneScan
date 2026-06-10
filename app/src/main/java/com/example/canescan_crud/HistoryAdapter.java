@@ -23,6 +23,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
+        void onItemClick(int position);
         void onDeleteClick(int position);
     }
 
@@ -92,6 +93,12 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
                     .error(R.drawable.sugarcane_close)
                     .into(holder.ivScanImage);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(position);
+            }
+        });
 
         if (holder.btnDelete != null) {
             holder.btnDelete.setOnClickListener(v -> {

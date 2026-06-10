@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/iv_suggestion_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/sugarcane_close"
+        android:scaleType="centerCrop"
+        android:background="@drawable/rounded_corners"
+        android:clipToOutline="true"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp">
+
+        <TextView
+            android:id="@+id/tv_suggestion_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sugarcane Name"
+            android:textColor="?attr/appTextColor"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_suggestion_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Healthy"
+            android:textColor="?attr/appPrimaryColor"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@drawable/ic_settings"
+        android:alpha="0.5"
+        app:tint="?attr/appTextColor"
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+</LinearLayout>

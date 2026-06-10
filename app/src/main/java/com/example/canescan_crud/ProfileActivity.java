@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -31,13 +32,15 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ProfileActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE = 1;
     private ImageView ivProfileHeader, ivProfileMain;
-    private EditText etUsername, etBio;
+    private EditText etFullName, etBio;
     private AutoCompleteTextView etGender;
     private SwitchCompat swDarkMode, swSounds, swTTS;
     private SharedPreferences sharedPreferences;
@@ -64,7 +67,7 @@ public class ProfileActivity extends AppCompatActivity {
         // UI Binding Initialization
         ivProfileHeader = findViewById(R.id.iv_profile_circle);
         ivProfileMain = findViewById(R.id.iv_profile_main);
-        etUsername = findViewById(R.id.et_username);
+        etFullName = findViewById(R.id.et_username);
         etGender = findViewById(R.id.et_gender);
         etBio = findViewById(R.id.et_bio);
 
@@ -77,11 +80,97 @@ public class ProfileActivity extends AppCompatActivity {
         AccessibilityHelper.speak("You're now in settings");
 
         setupTogglePreferences(isDarkMode);
-        setupGenderDropdown();
         setupClearAction();
+        loadUserData();
+        setupGenderDropdown();
+        setupAutoSave();
         updateProfileImage();
         setupAccountActions();
         setupNavigation();
+    }
+
+    private void setupGenderDropdown() {
+        if (etGender == null) return;
+        String[] genderOptions = {"Male", "Female", "Not prefer to say"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, genderOptions);
+        etGender.setAdapter(adapter);
+
+        etGender.setOnClickListener(v -> etGender.showDropDown());
+        etGender.setOnItemClickListener((parent, view, position, id) -> {
+            saveProfileData();
+        });
+    }
+
+    private void loadUserData() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            db.collection("users").document(user.getUid()).get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String name = documentSnapshot.getString("name");
+                    if (etFullName != null) etFullName.setText(name);
+
+                    String gender = documentSnapshot.getString("gender");
+                    if (etGender != null) etGender.setText(gender);
+
+                    String bio = documentSnapshot.getString("bio");
+                    if (etBio != null && bio != null) etBio.setText(bio);
+                }
+            });
+        }
+    }
+
+    private void setupAutoSave() {
+        View.OnFocusChangeListener autoSaveListener = (v, hasFocus) -> {
+            if (!hasFocus) {
+                saveProfileData();
+            }
+        };
+
+        if (etFullName != null) {
+            etFullName.setOnFocusChangeListener(autoSaveListener);
+            etFullName.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    v.clearFocus();
+                    return true;
+                }
+                return false;
+            });
+        }
+        if (etGender != null) etGender.setOnFocusChangeListener(autoSaveListener);
+        
+        if (etBio != null) {
+            etBio.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    etBio.setMinLines(3);
+                } else {
+                    etBio.setMinLines(1);
+                    saveProfileData();
+                }
+            });
+        }
+    }
+
+    private void saveProfileData() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
+
+        String name = etFullName.getText().toString().trim();
+        String gender = etGender.getText().toString().trim();
+        String bio = etBio.getText().toString().trim();
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", name);
+        updates.put("gender", gender);
+        updates.put("bio", bio);
+
+        db.collection("users").document(user.getUid())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    // Silent success, no toast to keep it smooth as requested
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void setupTogglePreferences(boolean isDarkMode) {
@@ -113,19 +202,6 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private void setupGenderDropdown() {
-        String[] genderOptions = {"Male", "Female", "Not prefer to say"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, genderOptions);
-        etGender.setAdapter(adapter);
-
-        etGender.setOnClickListener(v -> etGender.showDropDown());
-        etGender.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                etGender.showDropDown();
-            }
-        });
-    }
-
     private void setupClearAction() {
         View tvClear = findViewById(R.id.tv_upload_clear);
         if (tvClear != null) {
@@ -138,9 +214,11 @@ public class ProfileActivity extends AppCompatActivity {
                 ivProfileHeader.setImageResource(R.drawable.user);
                 ivProfileMain.setImageResource(R.drawable.user);
 
-                if (etUsername != null) etUsername.setText("");
+                if (etFullName != null) etFullName.setText("");
                 if (etGender != null) etGender.setText("");
                 if (etBio != null) etBio.setText("");
+
+                saveProfileData(); // Sync cleared state to database
 
                 Toast.makeText(this, "Profile cleared", Toast.LENGTH_SHORT).show();
             });
