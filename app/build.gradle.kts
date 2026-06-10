@@ -46,6 +46,8 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.osmdroid)
     implementation(libs.play.services.location)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     testImplementation(libs.junit)

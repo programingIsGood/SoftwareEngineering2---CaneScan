@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
+import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
@@ -13,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
@@ -25,12 +29,29 @@ import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
+import android.os.Build;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 public class DashboardActivity extends AppCompatActivity {
 
     private static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int REQUEST_PICK_IMAGE = 2;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 101;
     private ImageView ivProfileHeader;
     private TextView tvScansToday, tvInfectionsTotal, tvHealthyTotal, tvRecentName, tvRecentCondition;
@@ -134,9 +155,28 @@ public class DashboardActivity extends AppCompatActivity {
         if (btnScanNow != null) {
             btnScanNow.setOnClickListener(v -> {
                 AccessibilityHelper.handleViewClick(this, v);
-                checkLocationPermissionAndScan();
+                showImageSourceDialog();
             });
         }
+    }
+
+    private void showImageSourceDialog() {
+        String[] options = {"Take Photo", "Upload from Gallery"};
+        new AlertDialog.Builder(this)
+                .setTitle("Select Image Source")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        checkLocationPermissionAndAction(this::openCamera);
+                    } else {
+                        checkLocationPermissionAndAction(this::openGallery);
+                    }
+                })
+                .show();
+    }
+
+    private void openGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(intent, REQUEST_PICK_IMAGE);
     }
 
     private void loadDashboardData() {
@@ -191,7 +231,7 @@ public class DashboardActivity extends AppCompatActivity {
                 });
     }
 
-    private void checkLocationPermissionAndScan() {
+    private void checkLocationPermissionAndAction(Runnable action) {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
             return;
@@ -203,7 +243,7 @@ public class DashboardActivity extends AppCompatActivity {
                     if (location != null) {
                         pendingLat = location.getLatitude();
                         pendingLon = location.getLongitude();
-                        openCamera();
+                        action.run();
                     } else {
                         Toast.makeText(this, "Could not get accurate location. Make sure GPS is on.", Toast.LENGTH_LONG).show();
                         fusedLocationClient.getLastLocation().addOnSuccessListener(lastLoc -> {
@@ -214,7 +254,7 @@ public class DashboardActivity extends AppCompatActivity {
                                 pendingLat = 0.0;
                                 pendingLon = 0.0;
                             }
-                            openCamera();
+                            action.run();
                         });
                     }
                 })
@@ -222,7 +262,7 @@ public class DashboardActivity extends AppCompatActivity {
                     Toast.makeText(this, "Location error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     pendingLat = 0.0;
                     pendingLon = 0.0;
-                    openCamera();
+                    action.run();
                 });
     }
 
@@ -233,7 +273,7 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    private void saveScanWithLocation(double lat, double lon) {
+    private void saveScanWithLocation(double lat, double lon, String status, double confidence, String pathogenName, String imageUrl) {
         String userId = (mAuth.getCurrentUser() != null) ? mAuth.getCurrentUser().getUid() : "anonymous";
 
         // Combined data map containing metrics for structural visualization models
@@ -242,13 +282,15 @@ public class DashboardActivity extends AppCompatActivity {
         scanLog.put("latitude", lat);
         scanLog.put("longitude", lon);
         scanLog.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
-        scanLog.put("image_url", "https://firebasestorage.googleapis.com/.../sample.jpg");
+        
+        // Use the image from server if available, otherwise use placeholder
+        scanLog.put("image_url", (imageUrl != null && !imageUrl.isEmpty()) ? imageUrl : "https://firebasestorage.googleapis.com/.../sample.jpg");
 
         // Context fields from Version 2 map model structures
-        scanLog.put("name", "New Section");
-        scanLog.put("description", "Capture at " + lat + ", " + lon);
-        scanLog.put("status", "Healthy");
-        scanLog.put("type", "Healthy");
+        scanLog.put("name", "Scan " + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(new java.util.Date()));
+        scanLog.put("description", "Analyzed at " + lat + ", " + lon);
+        scanLog.put("status", status);
+        scanLog.put("type", status);
 
         db.collection("scan_logs").add(scanLog)
                 .addOnSuccessListener(documentReference -> {
@@ -256,24 +298,158 @@ public class DashboardActivity extends AppCompatActivity {
 
                     Map<String, Object> diagnosticResult = new HashMap<>();
                     diagnosticResult.put("scan_id", scanId);
-                    diagnosticResult.put("pathogen_id", "p1"); // Mock tracking parameters setup
-                    diagnosticResult.put("confidence_score", 0.95);
+                    diagnosticResult.put("pathogen_name", pathogenName);
+                    diagnosticResult.put("confidence_score", confidence);
 
                     db.collection("diagnostic_results").add(diagnosticResult)
                             .addOnSuccessListener(aVoid -> {
                                 Toast.makeText(this, "Scan and Diagnosis saved!", Toast.LENGTH_SHORT).show();
                                 loadDashboardData(); // Refresh dashboard stats
                             })
-                            .addOnFailureListener(e -> Toast.makeText(this, "Error saving diagnosis", Toast.LENGTH_SHORT).show());
+                            .addOnFailureListener(e -> {
+                                e.printStackTrace();
+                                Toast.makeText(this, "DB Error (Diag): " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Error saving scan", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    e.printStackTrace();
+                    Toast.makeText(this, "DB Error (Log): " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private void performPrediction(Bitmap bitmap, double lat, double lon) {
+        // Scale bitmap to a reasonable size for ML processing (e.g., max 1024px)
+        Bitmap scaledBitmap = scaleBitmap(bitmap, 1024);
+        
+        // Convert scaled bitmap to byte array
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        byte[] byteArray = stream.toByteArray();
+        
+        // Also prepare a base64 version of the photo as a fallback
+        String base64Fallback = "data:image/jpeg;base64," + android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
+
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("image", "image.jpg",
+                        RequestBody.create(byteArray, MediaType.parse("image/jpeg")))
+                .build();
+
+        Request request = new Request.Builder()
+                .url("https://2e43-34-19-94-55.ngrok-free.app/predict")
+                .post(requestBody)
+                .addHeader("ngrok-skip-browser-warning", "true")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(DashboardActivity.this, "Prediction failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    // Even if prediction fails, save the scan with "Unknown" status and the captured photo
+                    saveScanWithLocation(lat, lon, "Unknown", 0.0, "Unknown", base64Fallback);
+                });
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    String responseData = response.body().string();
+                    Gson gson = new Gson();
+                    JsonObject jsonObject = gson.fromJson(responseData, JsonObject.class);
+
+                    // Robust parsing for common ML API response structures
+                    String status = "Unknown";
+                    if (jsonObject.has("class")) status = jsonObject.get("class").getAsString();
+                    else if (jsonObject.has("label")) status = jsonObject.get("label").getAsString();
+                    else if (jsonObject.has("prediction")) status = jsonObject.get("prediction").getAsString();
+
+                    double confidence = 0.0;
+                    if (jsonObject.has("confidence")) confidence = jsonObject.get("confidence").getAsDouble();
+                    else if (jsonObject.has("score")) confidence = jsonObject.get("score").getAsDouble();
+
+                    String pathogen = jsonObject.has("pathogen") ? jsonObject.get("pathogen").getAsString() : status;
+                    
+                    // Look for annotated image data in response
+                    String serverImage = null;
+                    if (jsonObject.has("annotated_image")) {
+                        serverImage = jsonObject.get("annotated_image").getAsString();
+                        if (!serverImage.startsWith("data:") && !serverImage.startsWith("http")) {
+                            serverImage = "data:image/jpeg;base64," + serverImage;
+                        }
+                    } else if (jsonObject.has("image_url")) {
+                        serverImage = jsonObject.get("image_url").getAsString();
+                    }
+                    
+                    // Use server image if provided, otherwise use our captured photo
+                    final String finalImage = (serverImage != null) ? serverImage : base64Fallback;
+                    final String finalStatus = status;
+                    final double finalConfidence = confidence;
+                    final String finalPathogen = pathogen;
+
+                    runOnUiThread(() -> {
+                        Toast.makeText(DashboardActivity.this, "Analysis complete! Saving...", Toast.LENGTH_SHORT).show();
+                        saveScanWithLocation(lat, lon, finalStatus, finalConfidence, finalPathogen, finalImage);
+                    });
+                } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(DashboardActivity.this, "Server error: " + response.code(), Toast.LENGTH_SHORT).show();
+                        saveScanWithLocation(lat, lon, "Error", 0.0, "Server Error", base64Fallback);
+                    });
+                }
+            }
+        });
+    }
+
+    private Bitmap scaleBitmap(Bitmap bitmap, int maxSize) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+
+        float bitmapRatio = (float) width / (float) height;
+        if (bitmapRatio > 1) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+        return Bitmap.createScaledBitmap(bitmap, width, height, true);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            saveScanWithLocation(pendingLat, pendingLon);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                Bundle extras = data.getExtras();
+                if (extras != null) {
+                    Bitmap imageBitmap = (Bitmap) extras.get("data");
+                    if (imageBitmap != null) {
+                        performPrediction(imageBitmap, pendingLat, pendingLon);
+                    }
+                }
+            } else if (requestCode == REQUEST_PICK_IMAGE && data != null) {
+                Uri imageUri = data.getData();
+                if (imageUri != null) {
+                    Toast.makeText(this, "Image selected, processing...", Toast.LENGTH_SHORT).show();
+                    try {
+                        ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(), imageUri);
+                        Bitmap bitmap = ImageDecoder.decodeBitmap(source);
+                        // Ensure bitmap is mutable and not in hardware memory
+                        bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                        performPrediction(bitmap, pendingLat, pendingLon);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Toast.makeText(this, "Failed to load image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
         }
     }
 
@@ -282,7 +458,7 @@ public class DashboardActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                checkLocationPermissionAndScan();
+                showImageSourceDialog();
             } else {
                 Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
             }

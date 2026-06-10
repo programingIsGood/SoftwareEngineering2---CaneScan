@@ -1,18 +1,24 @@
 package com.example.canescan_crud;
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -38,8 +44,13 @@ public class MapActivity extends AppCompatActivity {
 
     private CardView cvDetails;
     private EditText etEditName, etEditDescription;
+    private ImageView ivDetailImage;
     private Button btnSave, btnCancel;
     private String selectedScanId;
+
+    private RecyclerView rvSearchResults;
+    private SearchSuggestionAdapter searchAdapter;
+    private List<Map<String, Object>> filteredSuggestions = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,10 +68,16 @@ public class MapActivity extends AppCompatActivity {
 
         // UI Detail Components
         cvDetails = findViewById(R.id.cv_details);
+        ivDetailImage = findViewById(R.id.iv_detail_image);
         etEditName = findViewById(R.id.et_edit_name);
         etEditDescription = findViewById(R.id.et_edit_description);
         btnSave = findViewById(R.id.btn_save);
         btnCancel = findViewById(R.id.btn_cancel);
+
+        rvSearchResults = findViewById(R.id.rv_search_results);
+        rvSearchResults.setLayoutManager(new LinearLayoutManager(this));
+        searchAdapter = new SearchSuggestionAdapter(filteredSuggestions, this::onSuggestionSelected);
+        rvSearchResults.setAdapter(searchAdapter);
 
         // Set initial default zoom (Barangay level)
         map.getController().setZoom(18.0);
@@ -117,11 +134,44 @@ public class MapActivity extends AppCompatActivity {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     searchQuery = s.toString().toLowerCase();
+                    updateSearchSuggestions(searchQuery);
                     refreshMap();
                 }
                 @Override
                 public void afterTextChanged(Editable s) {}
             });
+        }
+    }
+
+    private void updateSearchSuggestions(String query) {
+        filteredSuggestions.clear();
+        if (query.isEmpty()) {
+            rvSearchResults.setVisibility(View.GONE);
+        } else {
+            for (Map<String, Object> log : scanLogs) {
+                String name = String.valueOf(log.getOrDefault("name", ""));
+                if (name.toLowerCase().contains(query)) {
+                    filteredSuggestions.add(log);
+                }
+            }
+            if (!filteredSuggestions.isEmpty()) {
+                searchAdapter.updateList(filteredSuggestions);
+                rvSearchResults.setVisibility(View.VISIBLE);
+            } else {
+                rvSearchResults.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void onSuggestionSelected(Map<String, Object> suggestion) {
+        rvSearchResults.setVisibility(View.GONE);
+        Double lat = (Double) suggestion.get("latitude");
+        Double lon = (Double) suggestion.get("longitude");
+        if (lat != null && lon != null) {
+            GeoPoint target = new GeoPoint(lat, lon);
+            map.getController().animateTo(target);
+            map.getController().setZoom(21.0);
+            showScanDetails(suggestion);
         }
     }
 
@@ -160,43 +210,43 @@ public class MapActivity extends AppCompatActivity {
                 .whereEqualTo("user_id", userId)
                 .get()
                 .addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
-                scanLogs.clear();
-                List<GeoPoint> points = new ArrayList<>();
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        scanLogs.clear();
+                        List<GeoPoint> points = new ArrayList<>();
 
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    Map<String, Object> data = document.getData();
-                    data.put("id", document.getId());
-                    scanLogs.add(data);
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Map<String, Object> data = document.getData();
+                            data.put("id", document.getId());
+                            scanLogs.add(data);
 
-                    Double lat = (Double) data.get("latitude");
-                    Double lon = (Double) data.get("longitude");
-                    if (lat != null && lon != null && lat != 0.0) {
-                        points.add(new GeoPoint(lat, lon));
+                            Double lat = (Double) data.get("latitude");
+                            Double lon = (Double) data.get("longitude");
+                            if (lat != null && lon != null && lat != 0.0) {
+                                points.add(new GeoPoint(lat, lon));
+                            }
+                        }
+
+                        refreshMap();
+
+                        // If points are found, dynamically shift map focus to the newest entry
+                        if (!points.isEmpty()) {
+                            zoomToFitPoints(points);
+                        }
+                    } else {
+                        Toast.makeText(this, "Error loading scans", Toast.LENGTH_SHORT).show();
                     }
-                }
-
-                refreshMap();
-
-                // If points are found, dynamically shift map focus to the newest entry
-                if (!points.isEmpty()) {
-                    zoomToFitPoints(points);
-                }
-            } else {
-                Toast.makeText(this, "Error loading scans", Toast.LENGTH_SHORT).show();
-            }
-        });
+                });
     }
 
     private void refreshMap() {
         if (map == null) return;
         map.getOverlays().clear();
 
-        for (Map<String, Object> log : scanLogs) {
-            String name = String.valueOf(log.getOrDefault("name", "Unknown"));
-            String type = String.valueOf(log.getOrDefault("type", "Healthy"));
-            Double lat = (Double) log.get("latitude");
-            Double lon = (Double) log.get("longitude");
+        for (Map<String, Object> logItem : scanLogs) {
+            String name = String.valueOf(logItem.getOrDefault("name", "Unknown"));
+            String type = String.valueOf(logItem.getOrDefault("type", "Healthy"));
+            Double lat = (Double) logItem.get("latitude");
+            Double lon = (Double) logItem.get("longitude");
 
             if (lat == null || lon == null || lat == 0.0) continue;
 
@@ -213,12 +263,12 @@ public class MapActivity extends AppCompatActivity {
             circle.setFillColor(0x44FFFFFF & color); // Maintains opacity channel masking
             circle.setStrokeColor(color);
             circle.setStrokeWidth(2);
-            circle.setTitle("Scan Area: " + log.get("id"));
+            circle.setTitle("Scan Area: " + logItem.get("id"));
 
             circle.setOnClickListener((polygon, mapView, eventPos) -> {
                 if (cvDetails != null) {
                     AccessibilityHelper.handleViewClick(this, cvDetails);
-                    showScanDetails(log);
+                    showScanDetails(logItem);
                 }
                 return true;
             });
@@ -232,7 +282,38 @@ public class MapActivity extends AppCompatActivity {
         selectedScanId = (String) log.get("id");
         etEditName.setText(String.valueOf(log.getOrDefault("name", "")));
         etEditDescription.setText(String.valueOf(log.getOrDefault("description", "")));
+
+        String imageUrl = (String) log.get("image_url");
+        if (ivDetailImage != null) {
+            Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.sugarcane_close)
+                    .error(R.drawable.sugarcane_close)
+                    .into(ivDetailImage);
+
+            ivDetailImage.setOnClickListener(v -> showFullImageDialog(imageUrl));
+        }
+
         cvDetails.setVisibility(View.VISIBLE);
+    }
+
+    private void showFullImageDialog(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) return;
+
+        final Dialog fullImageDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        fullImageDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        fullImageDialog.setContentView(R.layout.dialog_full_image);
+
+        ImageView ivFull = fullImageDialog.findViewById(R.id.iv_full_image);
+        View btnBack = fullImageDialog.findViewById(R.id.btn_back_full);
+
+        Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.sugarcane_close)
+                .into(ivFull);
+
+        btnBack.setOnClickListener(v -> fullImageDialog.dismiss());
+        fullImageDialog.show();
     }
 
     private void zoomToFitPoints(List<GeoPoint> points) {
