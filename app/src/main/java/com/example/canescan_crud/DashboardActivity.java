@@ -47,6 +47,7 @@ import android.graphics.ImageDecoder;
 import android.os.Build;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
 
 public class DashboardActivity extends AppCompatActivity {
 
@@ -199,7 +200,8 @@ public class DashboardActivity extends AppCompatActivity {
                         String type = doc.getString("type");
                         if ("Healthy".equalsIgnoreCase(type)) {
                             healthyCount++;
-                        } else if ("Infected".equalsIgnoreCase(type)) {
+                        } else if (type != null && !"Unknown".equalsIgnoreCase(type) && !"Error".equalsIgnoreCase(type)) {
+                            // Any specific disease name (e.g. Smut, Red Rot) counts as Infected
                             infectedCount++;
                         }
 
@@ -222,8 +224,17 @@ public class DashboardActivity extends AppCompatActivity {
 
                     // Load most recent diagnose from the results we already have
                     if (recentDoc != null) {
+                        String recentType = recentDoc.getString("type");
                         tvRecentName.setText(recentDoc.getString("name"));
-                        tvRecentCondition.setText(recentDoc.getString("type"));
+                        tvRecentCondition.setText(recentType);
+                        
+                        // Dynamic styling based on 6-class detection
+                        if ("Healthy".equalsIgnoreCase(recentType)) {
+                            tvRecentCondition.setTextColor(getResources().getColor(android.R.color.holo_green_dark, null));
+                        } else if (recentType != null && !"---".equals(recentType)) {
+                            // Any of the 5 disease classes
+                            tvRecentCondition.setTextColor(getResources().getColor(android.R.color.holo_red_dark, null));
+                        }
                     } else {
                         tvRecentName.setText("---");
                         tvRecentCondition.setText("---");
@@ -342,7 +353,7 @@ public class DashboardActivity extends AppCompatActivity {
                 .build();
 
         Request request = new Request.Builder()
-                .url("https://2e43-34-19-94-55.ngrok-free.app/predict")
+                .url("https://9652-34-121-119-86.ngrok-free.app/predict")
                 .post(requestBody)
                 .addHeader("ngrok-skip-browser-warning", "true")
                 .build();
@@ -361,24 +372,50 @@ public class DashboardActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful() && response.body() != null) {
                     String responseData = response.body().string();
+                    android.util.Log.d("SCAN_DEBUG", "Server Response: " + responseData);
                     Gson gson = new Gson();
                     JsonObject jsonObject = gson.fromJson(responseData, JsonObject.class);
 
                     // Robust parsing for common ML API response structures
-                    String status = "Unknown";
-                    if (jsonObject.has("class")) status = jsonObject.get("class").getAsString();
-                    else if (jsonObject.has("label")) status = jsonObject.get("label").getAsString();
-                    else if (jsonObject.has("prediction")) status = jsonObject.get("prediction").getAsString();
-
+                    String status = "Healthy"; // Default to Healthy if no detections
                     double confidence = 0.0;
-                    if (jsonObject.has("confidence")) confidence = jsonObject.get("confidence").getAsDouble();
-                    else if (jsonObject.has("score")) confidence = jsonObject.get("score").getAsDouble();
+                    String pathogen = "Healthy";
+                    
+                    // 1. Check for best_detections array (your specific server structure)
+                    if (jsonObject.has("best_detections") && jsonObject.get("best_detections").isJsonArray()) {
+                        JsonArray detections = jsonObject.getAsJsonArray("best_detections");
+                        if (detections.size() > 0) {
+                            JsonObject firstDetection = detections.get(0).getAsJsonObject();
+                            if (firstDetection.has("class_name")) {
+                                status = firstDetection.get("class_name").getAsString();
+                                pathogen = status;
+                            }
+                            if (firstDetection.has("confidence")) {
+                                confidence = firstDetection.get("confidence").getAsDouble();
+                            }
+                        }
+                    } 
+                    // 2. Fallback to top-level keys
+                    else {
+                        if (jsonObject.has("class")) status = jsonObject.get("class").getAsString();
+                        else if (jsonObject.has("label")) status = jsonObject.get("label").getAsString();
+                        else if (jsonObject.has("prediction")) status = jsonObject.get("prediction").getAsString();
 
-                    String pathogen = jsonObject.has("pathogen") ? jsonObject.get("pathogen").getAsString() : status;
+                        if (jsonObject.has("confidence")) confidence = jsonObject.get("confidence").getAsDouble();
+                        else if (jsonObject.has("score")) confidence = jsonObject.get("score").getAsDouble();
+                        else if (jsonObject.has("consensus_confidence")) confidence = jsonObject.get("consensus_confidence").getAsDouble();
+
+                        pathogen = jsonObject.has("pathogen") ? jsonObject.get("pathogen").getAsString() : status;
+                    }
                     
                     // Look for annotated image data in response
                     String serverImage = null;
-                    if (jsonObject.has("annotated_image")) {
+                    if (jsonObject.has("annotated_image_base64")) {
+                        serverImage = jsonObject.get("annotated_image_base64").getAsString();
+                        if (!serverImage.startsWith("data:") && !serverImage.startsWith("http")) {
+                            serverImage = "data:image/jpeg;base64," + serverImage;
+                        }
+                    } else if (jsonObject.has("annotated_image")) {
                         serverImage = jsonObject.get("annotated_image").getAsString();
                         if (!serverImage.startsWith("data:") && !serverImage.startsWith("http")) {
                             serverImage = "data:image/jpeg;base64," + serverImage;

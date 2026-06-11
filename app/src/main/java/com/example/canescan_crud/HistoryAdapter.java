@@ -62,7 +62,17 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
             holder.tvScanName.setText(String.valueOf(item.getOrDefault("name", "Unknown Section")));
         }
         if (holder.tvStatusPill != null) {
-            holder.tvStatusPill.setText(String.valueOf(item.getOrDefault("status", "Unknown")));
+            String status = String.valueOf(item.getOrDefault("status", "Unknown"));
+            holder.tvStatusPill.setText(status);
+            
+            // Dynamic styling for 6 classes
+            if ("Healthy".equalsIgnoreCase(status)) {
+                holder.tvStatusPill.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.holo_green_dark, null));
+            } else if (!"Unknown".equalsIgnoreCase(status) && !"Error".equalsIgnoreCase(status)) {
+                holder.tvStatusPill.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.holo_red_dark, null));
+            } else {
+                holder.tvStatusPill.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.darker_gray, null));
+            }
         }
 
         // Diagnostic bindings from Version 1

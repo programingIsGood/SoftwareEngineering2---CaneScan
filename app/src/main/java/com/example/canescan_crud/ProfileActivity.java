@@ -31,6 +31,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -389,10 +393,37 @@ public class ProfileActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE && resultCode == RESULT_OK && data != null) {
             Uri imageUri = data.getData();
             if (imageUri != null) {
-                sharedPreferences.edit().putString("profile_image_uri", imageUri.toString()).apply();
-                loadProfileImage(imageUri);
-                Toast.makeText(this, "Profile picture updated", Toast.LENGTH_SHORT).show();
+                Uri localUri = copyUriToInternalStorage(imageUri);
+                if (localUri != null) {
+                    sharedPreferences.edit().putString("profile_image_uri", localUri.toString()).apply();
+                    loadProfileImage(localUri);
+                    Toast.makeText(this, "Profile picture updated", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Fallback to original URI if copy fails, though it might still have permission issues
+                    sharedPreferences.edit().putString("profile_image_uri", imageUri.toString()).apply();
+                    loadProfileImage(imageUri);
+                    Toast.makeText(this, "Profile picture updated (local copy failed)", Toast.LENGTH_SHORT).show();
+                }
             }
+        }
+    }
+
+    private Uri copyUriToInternalStorage(Uri uri) {
+        try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
+            if (inputStream == null) return null;
+            File file = new File(getFilesDir(), "profile_image.jpg");
+            try (OutputStream outputStream = new FileOutputStream(file)) {
+                byte[] buffer = new byte[4 * 1024];
+                int read;
+                while ((read = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, read);
+                }
+                outputStream.flush();
+            }
+            return Uri.fromFile(file);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

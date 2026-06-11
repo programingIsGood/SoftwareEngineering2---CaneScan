@@ -186,7 +186,16 @@ public class HistoryActivity extends AppCompatActivity {
 
                     // Type or Status evaluation categorization
                     String type = String.valueOf(item.getOrDefault("type", item.getOrDefault("status", "All")));
-                    boolean matchesFilter = currentFilter.equals("All") || type.equalsIgnoreCase(currentFilter);
+                    boolean matchesFilter;
+                    if (currentFilter.equals("All")) {
+                        matchesFilter = true;
+                    } else if (currentFilter.equals("Infected")) {
+                        // Any class that is NOT healthy/unknown/error is considered infected for filtering
+                        matchesFilter = !type.equalsIgnoreCase("Healthy") && !type.equalsIgnoreCase("Unknown") && !type.equalsIgnoreCase("Error");
+                    } else {
+                        // Direct match for "Healthy"
+                        matchesFilter = type.equalsIgnoreCase(currentFilter);
+                    }
 
                     return matchesQuery && matchesFilter;
                 })
@@ -232,13 +241,19 @@ public class HistoryActivity extends AppCompatActivity {
                                     if (diagTask.isSuccessful() && !diagTask.getResult().isEmpty()) {
                                         DocumentSnapshot diagDoc = diagTask.getResult().getDocuments().get(0);
                                         data.put("confidence_score", diagDoc.getDouble("confidence_score"));
-                                        String pathogenId = diagDoc.getString("pathogen_id");
-
-                                        if (pathogenId != null) {
-                                            return db.collection("pathogens").document(pathogenId).get()
-                                                    .addOnSuccessListener(pathogenDoc -> {
-                                                        data.put("pathogen_name", pathogenDoc.getString("common_name"));
-                                                    }).onSuccessTask(t -> Tasks.forResult(null));
+                                        
+                                        // Use pathogen_name directly if it exists, otherwise fall back to old ID logic
+                                        if (diagDoc.contains("pathogen_name")) {
+                                            data.put("pathogen_name", diagDoc.getString("pathogen_name"));
+                                            return Tasks.forResult(null);
+                                        } else {
+                                            String pathogenId = diagDoc.getString("pathogen_id");
+                                            if (pathogenId != null) {
+                                                return db.collection("pathogens").document(pathogenId).get()
+                                                        .addOnSuccessListener(pathogenDoc -> {
+                                                            data.put("pathogen_name", pathogenDoc.getString("common_name"));
+                                                        }).onSuccessTask(t -> Tasks.forResult(null));
+                                            }
                                         }
                                     }
                                     return Tasks.forResult(null);
