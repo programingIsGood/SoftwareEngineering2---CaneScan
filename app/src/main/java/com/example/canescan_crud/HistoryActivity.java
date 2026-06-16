@@ -241,7 +241,18 @@ public class HistoryActivity extends AppCompatActivity {
                                     if (diagTask.isSuccessful() && !diagTask.getResult().isEmpty()) {
                                         DocumentSnapshot diagDoc = diagTask.getResult().getDocuments().get(0);
                                         data.put("confidence_score", diagDoc.getDouble("confidence_score"));
+
+                                        // Load new consensus/diagnostic fields
+                                        data.put("consensus_tier", diagDoc.getString("consensus_tier"));
+                                        data.put("consensus_confidence", diagDoc.getDouble("consensus_confidence"));
+                                        data.put("inference_time_ms", diagDoc.getDouble("inference_time_ms"));
+                                        data.put("num_models_detected", diagDoc.getLong("num_models_detected"));
+                                        data.put("model_agreement", diagDoc.getString("model_agreement"));
                                         
+                                        if (diagDoc.contains("detections")) {
+                                            data.put("detections_list", diagDoc.get("detections"));
+                                        }
+
                                         // Use pathogen_name directly if it exists, otherwise fall back to old ID logic
                                         if (diagDoc.contains("pathogen_name")) {
                                             data.put("pathogen_name", diagDoc.getString("pathogen_name"));
@@ -310,7 +321,12 @@ public class HistoryActivity extends AppCompatActivity {
         Button btnClose = dialog.findViewById(R.id.btn_close_detail);
 
         tvName.setText(String.valueOf(item.getOrDefault("name", "Unknown Section")));
-        tvType.setText("Condition: " + item.getOrDefault("type", item.getOrDefault("status", "Unknown")));
+        String typeStr = String.valueOf(item.getOrDefault("type", item.getOrDefault("status", "Unknown")));
+        String pathogenStr = (String) item.get("pathogen_name");
+        if (("Unknown".equalsIgnoreCase(typeStr) || "Error".equalsIgnoreCase(typeStr)) && pathogenStr != null && !"Unknown".equalsIgnoreCase(pathogenStr)) {
+            typeStr = "Healthy".equalsIgnoreCase(pathogenStr) ? "Healthy" : "Infected";
+        }
+        tvType.setText("Condition: " + typeStr);
 
         Timestamp ts = (Timestamp) item.get("timestamp");
         if (ts != null) {
@@ -318,7 +334,23 @@ public class HistoryActivity extends AppCompatActivity {
             tvDate.setText("Date: " + sdf.format(ts.toDate()));
         }
 
-        tvDesc.setText(String.valueOf(item.getOrDefault("description", "No description provided.")));
+        String descBase = String.valueOf(item.getOrDefault("description", "No description provided."));
+        StringBuilder detailedDesc = new StringBuilder(descBase);
+        
+        if (item.containsKey("detections_list")) {
+            List<Map<String, Object>> detections = (List<Map<String, Object>>) item.get("detections_list");
+            if (detections != null && detections.size() > 1) {
+                detailedDesc.append("\n\nAll Detections:");
+                for (Map<String, Object> det : detections) {
+                    String cName = (String) det.getOrDefault("class_name", "Unknown");
+                    Object confObj = det.getOrDefault("confidence", 0.0);
+                    double conf = (confObj instanceof Number) ? ((Number) confObj).doubleValue() : 0.0;
+                    detailedDesc.append(String.format(Locale.getDefault(), "\n• %s: %.1f%%", cName, conf * 100));
+                }
+            }
+        }
+        
+        tvDesc.setText(detailedDesc.toString());
 
         String imageUrl = (String) item.get("image_url");
         Glide.with(this)

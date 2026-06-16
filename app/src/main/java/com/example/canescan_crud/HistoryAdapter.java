@@ -63,6 +63,10 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         }
         if (holder.tvStatusPill != null) {
             String status = String.valueOf(item.getOrDefault("status", "Unknown"));
+            String pathogen = (String) item.get("pathogen_name");
+            if (("Unknown".equalsIgnoreCase(status) || "Error".equalsIgnoreCase(status)) && pathogen != null && !"Unknown".equalsIgnoreCase(pathogen)) {
+                status = "Healthy".equalsIgnoreCase(pathogen) ? "Healthy" : "Infected";
+            }
             holder.tvStatusPill.setText(status);
             
             // Dynamic styling for 6 classes
@@ -77,7 +81,21 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
         // Diagnostic bindings from Version 1
         if (holder.tvPathogenName != null) {
-            holder.tvPathogenName.setText((String) item.getOrDefault("pathogen_name", "Unknown"));
+            String pathogenName = (String) item.get("pathogen_name");
+            if (pathogenName == null || "Unknown".equalsIgnoreCase(pathogenName)) {
+                String type = String.valueOf(item.getOrDefault("type", ""));
+                if (!"Unknown".equalsIgnoreCase(type) && !type.isEmpty() && !"null".equalsIgnoreCase(type)) {
+                    pathogenName = type;
+                } else {
+                    String status = String.valueOf(item.getOrDefault("status", ""));
+                    if (!"Unknown".equalsIgnoreCase(status) && !status.isEmpty() && !"null".equalsIgnoreCase(status)) {
+                        pathogenName = status;
+                    } else {
+                        pathogenName = "---";
+                    }
+                }
+            }
+            holder.tvPathogenName.setText(pathogenName);
         }
 
         if (holder.tvConfidence != null) {

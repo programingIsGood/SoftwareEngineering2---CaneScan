@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Build;
 import android.graphics.Bitmap;
 import android.graphics.ImageDecoder;
+import android.graphics.Paint;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
@@ -31,7 +32,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import okhttp3.Call;
@@ -42,9 +45,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import android.graphics.Bitmap;
-import android.graphics.ImageDecoder;
-import android.os.Build;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
@@ -189,9 +189,9 @@ public class DashboardActivity extends AppCompatActivity {
                 .whereEqualTo("user_id", userId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    int healthyCount = 0;
-                    int infectedCount = 0;
-                    int todayCount = 0;
+                    int healthyCnt = 0;
+                    int infectedCnt = 0;
+                    int todayCnt = 0;
 
                     long todayStart = new java.util.Date().getTime() - (new java.util.Date().getTime() % 86400000);
                     com.google.firebase.firestore.QueryDocumentSnapshot recentDoc = null;
@@ -199,16 +199,16 @@ public class DashboardActivity extends AppCompatActivity {
                     for (com.google.firebase.firestore.QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                         String type = doc.getString("type");
                         if ("Healthy".equalsIgnoreCase(type)) {
-                            healthyCount++;
+                            healthyCnt++;
                         } else if (type != null && !"Unknown".equalsIgnoreCase(type) && !"Error".equalsIgnoreCase(type)) {
                             // Any specific disease name (e.g. Smut, Red Rot) counts as Infected
-                            infectedCount++;
+                            infectedCnt++;
                         }
 
                         com.google.firebase.Timestamp ts = doc.getTimestamp("timestamp");
                         if (ts != null) {
                             if (ts.toDate().getTime() >= todayStart) {
-                                todayCount++;
+                                todayCnt++;
                             }
                             
                             // Track most recent scan manually from the list
@@ -218,9 +218,9 @@ public class DashboardActivity extends AppCompatActivity {
                         }
                     }
 
-                    tvScansToday.setText(String.valueOf(todayCount));
-                    tvInfectionsTotal.setText(String.valueOf(infectedCount));
-                    tvHealthyTotal.setText(String.valueOf(healthyCount));
+                    tvScansToday.setText(String.valueOf(todayCnt));
+                    tvInfectionsTotal.setText(String.valueOf(infectedCnt));
+                    tvHealthyTotal.setText(String.valueOf(healthyCnt));
 
                     // Load most recent diagnose from the results we already have
                     if (recentDoc != null) {
@@ -284,38 +284,64 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    private void saveScanWithLocation(double lat, double lon, String status, double confidence, String pathogenName, String imageUrl) {
+    private void saveScanWithLocation(double lat, double lon, String imageUrlFromServer, JsonObject rawJson) {
         String userId = (mAuth.getCurrentUser() != null) ? mAuth.getCurrentUser().getUid() : "anonymous";
 
-        // Combined data map containing metrics for structural visualization models
+        // Extract classification fields from raw JSON (or use defaults if null)
+        String status = "Healthy";
+        double confidence = 0.0;
+        Object detections = null;
+
+        if (rawJson != null) {
+            Gson gson = new Gson();
+            // Parse detections array
+            if (rawJson.has("best_detections") && rawJson.get("best_detections").isJsonArray()) {
+                JsonArray detectionsArr = rawJson.getAsJsonArray("best_detections");
+                if (detectionsArr.size() > 0) {
+                    JsonObject first = detectionsArr.get(0).getAsJsonObject();
+                    status = first.has("class_name") ? first.get("class_name").getAsString() : "Healthy";
+                    confidence = first.has("confidence") ? first.get("confidence").getAsDouble() : 0.0;
+                }
+                
+                detections = gson.fromJson(detectionsArr, List.class);
+                detections = sanitizeForFirestore(detections);
+            }
+        }
+
+        // Build scan_logs document (Slim version)
         Map<String, Object> scanLog = new HashMap<>();
         scanLog.put("user_id", userId);
         scanLog.put("latitude", lat);
         scanLog.put("longitude", lon);
         scanLog.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
         
-        // Use the image from server if available, otherwise use placeholder
-        scanLog.put("image_url", (imageUrl != null && !imageUrl.isEmpty()) ? imageUrl : "https://firebasestorage.googleapis.com/.../sample.jpg");
+        // Firestore has a 1MB limit per document. 
+        // We only save the image if it's within a safe size (e.g. < 800KB)
+        String finalImageUrl = "https://firebasestorage.googleapis.com/.../sample.jpg";
+        if (imageUrlFromServer != null && imageUrlFromServer.length() < 800000) {
+            finalImageUrl = imageUrlFromServer;
+        }
 
-        // Context fields from Version 2 map model structures
+        scanLog.put("image_url", finalImageUrl);
         scanLog.put("name", "Scan " + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(new java.util.Date()));
-        scanLog.put("description", "Analyzed at " + lat + ", " + lon);
         scanLog.put("status", status);
         scanLog.put("type", status);
+
+        // Build diagnostic_result map (Minimal version)
+        Map<String, Object> diagnosticResult = new HashMap<>();
+        diagnosticResult.put("pathogen_name", status);
+        diagnosticResult.put("confidence_score", confidence);
+        if (detections != null) diagnosticResult.put("detections", detections);
 
         db.collection("scan_logs").add(scanLog)
                 .addOnSuccessListener(documentReference -> {
                     String scanId = documentReference.getId();
-
-                    Map<String, Object> diagnosticResult = new HashMap<>();
                     diagnosticResult.put("scan_id", scanId);
-                    diagnosticResult.put("pathogen_name", pathogenName);
-                    diagnosticResult.put("confidence_score", confidence);
 
                     db.collection("diagnostic_results").add(diagnosticResult)
                             .addOnSuccessListener(aVoid -> {
                                 Toast.makeText(this, "Scan and Diagnosis saved!", Toast.LENGTH_SHORT).show();
-                                loadDashboardData(); // Refresh dashboard stats
+                                loadDashboardData();
                             })
                             .addOnFailureListener(e -> {
                                 e.printStackTrace();
@@ -337,7 +363,7 @@ public class DashboardActivity extends AppCompatActivity {
         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
         byte[] byteArray = stream.toByteArray();
         
-        // Also prepare a base64 version of the photo as a fallback
+        // Prepare original photo as fallback
         String base64Fallback = "data:image/jpeg;base64," + android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP);
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -353,7 +379,7 @@ public class DashboardActivity extends AppCompatActivity {
                 .build();
 
         Request request = new Request.Builder()
-                .url("https://9652-34-121-119-86.ngrok-free.app/predict")
+                .url("https://8ee5-34-151-163-122.ngrok-free.app/predict")
                 .post(requestBody)
                 .addHeader("ngrok-skip-browser-warning", "true")
                 .build();
@@ -363,8 +389,7 @@ public class DashboardActivity extends AppCompatActivity {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> {
                     Toast.makeText(DashboardActivity.this, "Prediction failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    // Even if prediction fails, save the scan with "Unknown" status and the captured photo
-                    saveScanWithLocation(lat, lon, "Unknown", 0.0, "Unknown", base64Fallback);
+                    saveScanWithLocation(lat, lon, base64Fallback, null);
                 });
             }
 
@@ -376,38 +401,6 @@ public class DashboardActivity extends AppCompatActivity {
                     Gson gson = new Gson();
                     JsonObject jsonObject = gson.fromJson(responseData, JsonObject.class);
 
-                    // Robust parsing for common ML API response structures
-                    String status = "Healthy"; // Default to Healthy if no detections
-                    double confidence = 0.0;
-                    String pathogen = "Healthy";
-                    
-                    // 1. Check for best_detections array (your specific server structure)
-                    if (jsonObject.has("best_detections") && jsonObject.get("best_detections").isJsonArray()) {
-                        JsonArray detections = jsonObject.getAsJsonArray("best_detections");
-                        if (detections.size() > 0) {
-                            JsonObject firstDetection = detections.get(0).getAsJsonObject();
-                            if (firstDetection.has("class_name")) {
-                                status = firstDetection.get("class_name").getAsString();
-                                pathogen = status;
-                            }
-                            if (firstDetection.has("confidence")) {
-                                confidence = firstDetection.get("confidence").getAsDouble();
-                            }
-                        }
-                    } 
-                    // 2. Fallback to top-level keys
-                    else {
-                        if (jsonObject.has("class")) status = jsonObject.get("class").getAsString();
-                        else if (jsonObject.has("label")) status = jsonObject.get("label").getAsString();
-                        else if (jsonObject.has("prediction")) status = jsonObject.get("prediction").getAsString();
-
-                        if (jsonObject.has("confidence")) confidence = jsonObject.get("confidence").getAsDouble();
-                        else if (jsonObject.has("score")) confidence = jsonObject.get("score").getAsDouble();
-                        else if (jsonObject.has("consensus_confidence")) confidence = jsonObject.get("consensus_confidence").getAsDouble();
-
-                        pathogen = jsonObject.has("pathogen") ? jsonObject.get("pathogen").getAsString() : status;
-                    }
-                    
                     // Look for annotated image data in response
                     String serverImage = null;
                     if (jsonObject.has("annotated_image_base64")) {
@@ -423,21 +416,18 @@ public class DashboardActivity extends AppCompatActivity {
                     } else if (jsonObject.has("image_url")) {
                         serverImage = jsonObject.get("image_url").getAsString();
                     }
-                    
-                    // Use server image if provided, otherwise use our captured photo
+
+                    // Priority: Server Image > Original Fallback
                     final String finalImage = (serverImage != null) ? serverImage : base64Fallback;
-                    final String finalStatus = status;
-                    final double finalConfidence = confidence;
-                    final String finalPathogen = pathogen;
 
                     runOnUiThread(() -> {
                         Toast.makeText(DashboardActivity.this, "Analysis complete! Saving...", Toast.LENGTH_SHORT).show();
-                        saveScanWithLocation(lat, lon, finalStatus, finalConfidence, finalPathogen, finalImage);
+                        saveScanWithLocation(lat, lon, finalImage, jsonObject);
                     });
                 } else {
                     runOnUiThread(() -> {
                         Toast.makeText(DashboardActivity.this, "Server error: " + response.code(), Toast.LENGTH_SHORT).show();
-                        saveScanWithLocation(lat, lon, "Error", 0.0, "Server Error", base64Fallback);
+                        saveScanWithLocation(lat, lon, base64Fallback, null);
                     });
                 }
             }
@@ -515,6 +505,30 @@ public class DashboardActivity extends AppCompatActivity {
         } else {
             ivProfileHeader.setImageResource(R.drawable.user);
         }
+    }
+
+    private Object sanitizeForFirestore(Object value) {
+        if (value instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) value;
+            Map<String, Object> sanitized = new HashMap<>();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                sanitized.put(entry.getKey(), sanitizeForFirestore(entry.getValue()));
+            }
+            return sanitized;
+        } else if (value instanceof List) {
+            List<Object> list = (List<Object>) value;
+            for (Object element : list) {
+                if (element instanceof List) {
+                    return new Gson().toJson(list);
+                }
+            }
+            List<Object> sanitized = new ArrayList<>();
+            for (Object element : list) {
+                sanitized.add(sanitizeForFirestore(element));
+            }
+            return sanitized;
+        }
+        return value;
     }
 
     @Override
